@@ -6,5 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.56"
 clip = "0.1.1"
+config = "0.13.0"
+crossterm = "0.23.1"
+dirs = "4.0.0"
 tui = "0.17.0"
