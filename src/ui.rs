@@ -13,13 +13,16 @@ use tui::{
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
-        .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
+        .constraints([
+                     Constraint::Length(3),
+                     Constraint::Min(0)
+        ].as_ref())
         .split(f.size());
     let titles = app
         .tabs
         .titles
         .iter()
-        .map(|t| Spans::from(Span::styled(*t, Style::default().fg(Color::Green))))
+        .map(|t| Spans::from(Span::styled(*t, Style::default().fg(Color::Gray))))
         .collect();
     let tabs = Tabs::new(titles)
         .block(Block::default().borders(Borders::ALL).title(app.title))
@@ -98,10 +101,8 @@ where
             )
             .split(chunks[0]);
         draw_text(f, chunks[0]);
-        draw_text(f, chunks[1]);
-        draw_text(f, chunks[2]);
     }
-    draw_text(f, chunks[2]);
+    draw_text(f, chunks[1]);
 }
 
 fn draw_second_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
