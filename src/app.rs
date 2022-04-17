@@ -15,6 +15,8 @@ use tui::{
     widgets::ListState,
 };
 
+use crate::calendar::Calendar;
+
 
 pub struct TabsState<'a> {
     pub titles: Vec<&'a str>,
@@ -89,6 +91,7 @@ pub struct App<'a> {
     pub tasks: StatefulList<&'a str>,
     pub logs: StatefulList<(&'a str, &'a str)>,
     pub enhanced_graphics: bool,
+    pub calendar: Calendar,
 }
 
 impl<'a> App<'a> {
@@ -99,6 +102,7 @@ impl<'a> App<'a> {
             tabs: TabsState::new(vec!["Calendar", "Todo"]),
             tasks: StatefulList::with_items(["A", "B", "C"].to_vec()),
             logs: StatefulList::with_items([("A", "A"), ("B", "B")].to_vec()),
+            calendar: Calendar::new().unwrap(),
             enhanced_graphics,
         }
     }
@@ -126,6 +130,7 @@ impl<'a> App<'a> {
             }
             'j' => { self.on_down(); }
             'k' => { self.on_up(); }
+            'a' => { self.on_add_item(); }
             _ => {}
         }
     }
@@ -141,6 +146,14 @@ impl<'a> App<'a> {
     pub fn on_tick(&mut self) {
         let log = self.logs.items.pop().unwrap();
         self.logs.items.insert(0, log);
+    }
+
+    pub fn on_add_item(&mut self) {
+        match self.tabs.index {
+            _ => self.calendar.add_event("1", "Some event").unwrap(),
+            1 => self.calendar.add_todo("todo", "TODO").unwrap(),
+        }
+
     }
 }
 

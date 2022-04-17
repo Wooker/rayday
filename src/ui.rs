@@ -10,6 +10,8 @@ use tui::{
     Frame,
 };
 
+use pickledb::PickleDbIteratorItem;
+
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
@@ -77,6 +79,34 @@ where
     f.render_widget(paragraph, area);
 }
 
+fn draw_test<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+where
+    B: Backend,
+{
+    let chunks = Layout::default()
+        .constraints(
+            [
+                Constraint::Min(8),
+                Constraint::Length(7),
+            ]
+            .as_ref(),
+        )
+        .split(area);
+    {
+        let chunks = Layout::default()
+            .constraints(
+                [
+                    Constraint::Length(5),
+                    Constraint::Percentage(50)
+                ]
+                .as_ref()
+            )
+            .split(chunks[0]);
+        draw_text(f, chunks[0]);
+    }
+    draw_text(f, chunks[1]);
+}
+
 fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
 where
     B: Backend,
@@ -142,6 +172,15 @@ where
             let warning_style = Style::default().fg(Color::Yellow);
             let error_style = Style::default().fg(Color::Magenta);
             let critical_style = Style::default().fg(Color::Red);
+            /*
+            let todos: Vec<ListItem> = app
+                .calendar
+                .todos_iter()
+                .map(|itm| {
+                    itm.get_value().unwrap()
+                })
+                .collect();
+            */
             let logs: Vec<ListItem> = app
                 .logs
                 .items

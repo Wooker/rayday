@@ -12,6 +12,7 @@ use std::{
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let calendar = calendar::Calendar::new().unwrap();
     let tick_rate = Duration::from_secs(1);
     run(tick_rate, true)?;
 
