@@ -1,8 +1,10 @@
 #![deny(warnings)]
 #![allow(unused)]
+
 mod app;
 mod ui;
 mod calendar;
+mod event;
 
 use app::run;
 

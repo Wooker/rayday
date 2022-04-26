@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.56"
+chrono = "0.4.19"
 clip = "0.1.1"
 config = "0.13.0"
 crossterm = "0.23.1"
