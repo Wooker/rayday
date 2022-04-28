@@ -1,6 +1,9 @@
 use crate::ui;
+use chrono::prelude::*;
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyEvent, KeyCode, KeyModifiers},
+    event::{
+        self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers,
+    },
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -11,16 +14,14 @@ use std::{
 };
 use tui::{
     backend::{Backend, CrosstermBackend},
-    Terminal,
     widgets::ListState,
+    Terminal,
 };
-use chrono::prelude::*;
 
 use crate::{
     calendar::Calendar,
-    event::{Event as CalEvent, EventTime as CalEventTime},
+    event::{Event as CalEvent, EventTime as CalEventTime, Today},
 };
-
 
 pub struct TabsState<'a> {
     pub titles: Vec<&'a str>,
@@ -43,7 +44,6 @@ impl<'a> TabsState<'a> {
         }
     }
 }
-
 
 pub struct StatefulList<T> {
     pub state: ListState,
@@ -86,7 +86,6 @@ impl<T> StatefulList<T> {
         self.state.select(Some(i));
     }
 }
-
 
 pub struct App<'a> {
     pub title: &'a str,
@@ -132,17 +131,27 @@ impl<'a> App<'a> {
             'q' => {
                 self.should_quit = true;
             }
-            'j' => { self.on_down(); }
-            'k' => { self.on_up(); }
-            'a' => { self.on_add_item(); }
+            'j' => {
+                self.on_down();
+            }
+            'k' => {
+                self.on_up();
+            }
+            'a' => {
+                self.on_add_item();
+            }
             _ => {}
         }
     }
 
     pub fn on_ctrl_key(&mut self, c: char) {
         match c {
-            'h' => { self.on_left(); }
-            'l' => { self.on_right(); }
+            'h' => {
+                self.on_left();
+            }
+            'l' => {
+                self.on_right();
+            }
             _ => {}
         }
     }
@@ -154,16 +163,17 @@ impl<'a> App<'a> {
 
     pub fn on_add_item(&mut self) {
         match self.tabs.index {
-            _ => self.calendar.add_event(CalEvent::new(
-                    CalEventTime::new(Local::now(), Local::now().with_hour(23).unwrap()).unwrap(),
-                    String::from("Test"))
-                ).unwrap(),
+            _ => self
+                .calendar
+                .add_event(CalEvent::new(
+                        CalEventTime::today(10, 0, chrono::Duration::minutes(30)),
+                    String::from("Test"),
+                ))
+                .unwrap(),
             1 => self.calendar.add_todo("todo", "TODO").unwrap(),
         }
-
     }
 }
-
 
 pub fn run(tick_rate: Duration, enhanced_graphics: bool) -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -208,7 +218,9 @@ fn run_app<B: Backend>(
         if crossterm::event::poll(timeout)? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    KeyCode::Char(c) if key.modifiers == KeyModifiers::CONTROL => app.on_ctrl_key(c),
+                    KeyCode::Char(c) if key.modifiers == KeyModifiers::CONTROL => {
+                        app.on_ctrl_key(c)
+                    }
                     KeyCode::Char(c) => app.on_key(c),
                     KeyCode::Left => app.on_left(),
                     KeyCode::Up => app.on_up(),

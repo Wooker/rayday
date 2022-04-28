@@ -1,7 +1,7 @@
-use chrono::prelude::*;
+use chrono::{prelude::*, Duration};
 
-use std::{fmt, cmp, borrow::Borrow};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::{borrow::Borrow, cmp, fmt};
 
 const PARSE_TIME: &str = "%Y-%m-%d %H:%M:%S %:z";
 
@@ -12,10 +12,14 @@ enum Periodicity {
     Yearly,
 }
 
+pub trait Today {
+    fn today(hours: u32, minutes: u32, d: Duration) -> EventTime;
+}
+
 #[derive(Debug)]
 pub enum EventTimeError {
     EndBeforeStart,
-    Unknown
+    Unknown,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -30,7 +34,6 @@ impl EventTime {
             cmp::Ordering::Greater => Err(EventTimeError::EndBeforeStart),
             cmp::Ordering::Less => Ok(EventTime { start, end }),
             _ => Err(EventTimeError::Unknown),
-
         }
     }
 
@@ -56,11 +59,21 @@ impl From<&str> for EventTime {
         let mut v = item.split('|').collect::<Vec<&str>>();
         let end: &str = v.pop().unwrap();
         let start: &str = v.pop().unwrap();
-        println!("{}|{}", start, end);
 
         EventTime {
             start: Local.datetime_from_str(start, PARSE_TIME).unwrap(),
             end: Local.datetime_from_str(end, PARSE_TIME).unwrap(),
+        }
+    }
+}
+
+impl Today for EventTime {
+    // duration in minutes
+    fn today(hours: u32, minutes: u32, d: Duration) -> EventTime {
+        let today = Local::today().and_hms(hours, minutes, 0);
+        EventTime {
+            start: today,
+            end: today.checked_add_signed(d).unwrap(),
         }
     }
 }
@@ -73,10 +86,7 @@ pub struct Event {
 
 impl Event {
     pub fn new(time: EventTime, description: String) -> Event {
-        Event {
-            time,
-            description,
-        }
+        Event { time, description }
     }
 
     pub fn time(&self) -> &EventTime {
@@ -112,8 +122,15 @@ mod tests {
 
     #[test]
     fn time_from_str() {
-        let time = EventTime::new(Local.ymd(2022, 1, 1).and_hms(0, 0, 0), Local.ymd(2022, 1, 1).and_hms(1, 0, 0)).unwrap();
+        let time = EventTime::new(
+            Local.ymd(2022, 1, 1).and_hms(0, 0, 0),
+            Local.ymd(2022, 1, 1).and_hms(1, 0, 0),
+        )
+        .unwrap();
 
-        assert_eq!(EventTime::from("2022-01-01 00:00:00 +06:00|2022-01-01 01:00:00 +06:00"), time);
+        assert_eq!(
+            EventTime::from("2022-01-01 00:00:00 +06:00|2022-01-01 01:00:00 +06:00"),
+            time
+        );
     }
 }

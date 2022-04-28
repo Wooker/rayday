@@ -1,27 +1,19 @@
-use config::{Config, Map, Source, Value, ConfigError};
 use anyhow::{anyhow, Error, Result};
+use config::{Config, ConfigError, Map, Source, Value};
 use std::{
-    fs,
     collections::HashMap,
+    fs,
     path::{Path, PathBuf},
 };
 
-
 use chrono::prelude::*;
 
-use crate::event::{Event, EventTime, EventTimeError};
+use crate::event::{Event, EventTime, EventTimeError, Today};
 
 use pickledb::{
-    PickleDb,
-    PickleDbDumpPolicy,
+    error::Error as PickleError, PickleDb, PickleDbDumpPolicy, PickleDbIterator,
     SerializationMethod,
-    PickleDbIterator,
-    error::Error as PickleError,
 };
-
-const REFORM_YEAR: u32 = 1099;
-const MONTHS: usize = 12;
-const WEEKDAYS: u32 = 7;
 
 const CONFIG_DIR: &str = ".config";
 const APP_CONFIG_DIR: &str = "rayday";
@@ -44,49 +36,43 @@ impl Calendar {
                 let home_config_dir = path.join(CONFIG_DIR);
                 let app_config_dir = home_config_dir.join(APP_CONFIG_DIR);
 
-                if !home_config_dir.is_dir() {
-                    fs::create_dir(&home_config_dir)?;
-                }
-
-                if !app_config_dir.is_dir() {
-                    fs::create_dir(&app_config_dir)?;
-                }
-
                 let config_file_path = &app_config_dir.join(CONFIG_NAME);
                 let events_file_path = &app_config_dir.join(EVENTS_NAME);
                 let todos_file_path = &app_config_dir.join(TODOS_NAME);
 
-                if !config_file_path.is_file() {
+                if !home_config_dir.is_dir() {
+                    fs::create_dir(&home_config_dir)?;
+                }
+
+                let mut events_db: PickleDb;
+                let mut todos_db: PickleDb;
+                if !app_config_dir.is_dir() {
+                    fs::create_dir(&app_config_dir)?;
                     fs::File::create(config_file_path);
-                }
-
-                if !events_file_path.is_file() {
-                    fs::File::create(events_file_path);
-                }
-
-                if !todos_file_path.is_file() {
-                    fs::File::create(todos_file_path);
-                }
-
-                let mut events_db: PickleDb = PickleDb::new(events_file_path, PickleDbDumpPolicy::AutoDump, SerializationMethod::Json);
-                /*
-                if !events_file_path.is_file() {
-                    events_db = PickleDb::new(events_file_path, PickleDbDumpPolicy::AutoDump, SerializationMethod::Json);
+                    events_db = PickleDb::new(
+                        events_file_path,
+                        PickleDbDumpPolicy::AutoDump,
+                        SerializationMethod::Json,
+                    );
+                    todos_db = PickleDb::new(
+                        todos_file_path,
+                        PickleDbDumpPolicy::AutoDump,
+                        SerializationMethod::Json,
+                    );
                 } else {
-                    events_db = PickleDb::load(events_file_path, PickleDbDumpPolicy::AutoDump, SerializationMethod::Json).unwrap();
+                    events_db = PickleDb::load(
+                        events_file_path,
+                        PickleDbDumpPolicy::AutoDump,
+                        SerializationMethod::Json,
+                    )
+                    .unwrap();
+                    todos_db = PickleDb::load(
+                        todos_file_path,
+                        PickleDbDumpPolicy::AutoDump,
+                        SerializationMethod::Json,
+                    )
+                    .unwrap();
                 }
-                */
-                //let events_db = PickleDb::load(events_file_path, PickleDbDumpPolicy::AutoDump, SerializationMethod::Json)?;
-
-                let mut todos_db: PickleDb = PickleDb::new(todos_file_path, PickleDbDumpPolicy::AutoDump, SerializationMethod::Json);
-                /*
-                if !todos_file_path.is_file() {
-                    todos_db = PickleDb::new(todos_file_path, PickleDbDumpPolicy::AutoDump, SerializationMethod::Json);
-                } else {
-                    todos_db = PickleDb::load(todos_file_path, PickleDbDumpPolicy::AutoDump, SerializationMethod::Json).unwrap();
-                }
-                */
-                //let todos_db = PickleDb::load(todos_file_path, PickleDbDumpPolicy::AutoDump, SerializationMethod::Json)?;
 
                 Ok(Calendar {
                     config_dir: app_config_dir,
@@ -104,7 +90,15 @@ impl Calendar {
     }
 
     pub fn add_event(&mut self, event: Event) -> Result<(), PickleError> {
-        self.events.set(format!("{}|{}", &event.time().start_datetime().to_string(), &event.time().end_datetime().to_string()).as_str(), &event.desc())
+        self.events.set(
+            format!(
+                "{}|{}",
+                &event.time().start_datetime().to_string(),
+                &event.time().end_datetime().to_string()
+            )
+            .as_str(),
+            &event.desc(),
+        )
     }
 
     pub fn add_todo(&mut self, key: &str, value: &str) -> Result<()> {
@@ -112,16 +106,18 @@ impl Calendar {
         Ok(())
     }
 
-    pub fn get_events_on_date(&mut self, date: Date<Local>) -> Vec<Event> {
+    pub fn get_events_on_date(&self, date: Date<Local>) -> Vec<Event> {
         // Get EventTime as keys from db
         self.events
             .iter()
             .map(|e| {
-                Event::new(EventTime::from(e.get_key()), e.get_value::<String>().unwrap())
+                Event::new(
+                    EventTime::from(e.get_key()),
+                    e.get_value::<String>().unwrap(),
+                )
             })
-            .filter(|e| {
-                e.time().start_date() == date
-            }).collect()
+            .filter(|e| e.time().start_date() == date)
+            .collect()
     }
 
     pub fn get_todo(&mut self, key: &str, value: &str) -> Result<()> {
@@ -138,27 +134,6 @@ impl Calendar {
     }
 }
 
-fn is_leap_year(year: u32) -> bool {
-    if year <= REFORM_YEAR {
-        return year % 4 == 0;
-    }
-    (year % 4 == 0) ^ (year % 100 == 0) ^ (year % 400 == 0)
-}
-
-fn days_by_year(mut year: u32) -> u32 {
-    let mut count: u32 = 0;
-
-    while year > 1 {
-        year -= 1;
-        if is_leap_year(year) {
-            count += 366
-        } else {
-            count += 365
-        }
-    }
-    count
-}
-
 #[cfg(test)]
 mod tests {
     use chrono::Duration;
@@ -171,27 +146,27 @@ mod tests {
         let mut cal = Calendar::new().unwrap();
         let mut map = HashMap::new();
 
-        assert_eq!(map, cal.config
-            .try_deserialize::<HashMap<String, String>>()
-            .unwrap());
+        assert_eq!(
+            map,
+            cal.config
+                .try_deserialize::<HashMap<String, String>>()
+                .unwrap()
+        );
     }
 
     #[test]
     fn add_event() {
         let mut cal = Calendar::new().unwrap();
 
-        let today = Local::today();
-        let start = today.and_hms(12, 0, 0);
 
-        let time = EventTime::new(start, start.checked_add_signed(Duration::minutes(40)).unwrap()).unwrap();
-        cal.add_event(Event::new(time, "Event today!".to_string()));
+        cal.add_event(Event::new(EventTime::today(12, 0, Duration::minutes(30)), "Event today!".to_string()));
+        cal.add_event(Event::new(EventTime::today(12, 0, Duration::minutes(35)), "Another event!".to_string()));
 
-        let time = EventTime::new(start.checked_add_signed(Duration::days(5)).unwrap(), start.checked_add_signed(Duration::days(40)).unwrap()).unwrap();
-        cal.add_event(Event::new(time, "Another event!".to_string()));
-
-        let events = cal.get_events_on_date(today);
+        let events = cal.get_events_on_date(Local::today());
         dbg!(&events);
         assert_eq!(events.is_empty(), false);
         assert_eq!(events.iter().nth(0).unwrap().desc(), "Event today!");
+
+        cal.add_event(Event::new(EventTime::today(12, 0, Duration::minutes(40)), "Yet another event!".to_string()));
     }
 }

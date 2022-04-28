@@ -1,24 +1,21 @@
 use crate::app::App;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Layout, Rect, Direction},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{
-        Paragraph, Block, Borders, Tabs, Wrap, ListItem, List,
-    },
+    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap},
     Frame,
 };
 
 use pickledb::PickleDbIteratorItem;
+use chrono::prelude::*;
 
+use crate::event::Event;
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
-        .constraints([
-                     Constraint::Length(3),
-                     Constraint::Min(0)
-        ].as_ref())
+        .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
         .split(f.size());
     let titles = app
         .tabs
@@ -84,23 +81,11 @@ where
     B: Backend,
 {
     let chunks = Layout::default()
-        .constraints(
-            [
-                Constraint::Min(8),
-                Constraint::Length(7),
-            ]
-            .as_ref(),
-        )
+        .constraints([Constraint::Min(8), Constraint::Length(7)].as_ref())
         .split(area);
     {
         let chunks = Layout::default()
-            .constraints(
-                [
-                    Constraint::Length(5),
-                    Constraint::Percentage(50)
-                ]
-                .as_ref()
-            )
+            .constraints([Constraint::Length(5), Constraint::Percentage(50)].as_ref())
             .split(chunks[0]);
         draw_text(f, chunks[0]);
     }
@@ -112,25 +97,34 @@ where
     B: Backend,
 {
     let chunks = Layout::default()
-        .constraints(
-            [
-                Constraint::Min(8),
-                Constraint::Length(7),
-            ]
-            .as_ref(),
-        )
+        .constraints([Constraint::Min(8), Constraint::Length(7)].as_ref())
         .split(area);
     {
         let chunks = Layout::default()
-            .constraints(
-                [
-                    Constraint::Length(5),
-                    Constraint::Percentage(50)
-                ]
-                .as_ref()
-            )
+            .constraints([Constraint::Length(5), Constraint::Percentage(50)].as_ref())
             .split(chunks[0]);
         draw_text(f, chunks[0]);
+
+        let info_style = Style::default().fg(Color::Blue);
+        let today = Local::today();
+        let events: Vec<Event> = app.calendar.get_events_on_date(today);
+        let events: Vec<ListItem> = events
+            .iter()
+            .map(|itm| {
+                let s = info_style;
+                let content = vec![Spans::from(vec![
+                    Span::styled(format!("{}|{}: ", itm.time().start_date(), itm.time().end_date()), s),
+                    Span::raw(itm.desc()),
+                ])];
+                ListItem::new(content)
+            })
+            .collect();
+
+        let tasks = List::new(events)
+            .block(Block::default().borders(Borders::ALL).title("List"))
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+            .highlight_symbol("> ");
+        f.render_stateful_widget(tasks, chunks[1], &mut app.tasks.state);
     }
     draw_text(f, chunks[1]);
 }
@@ -161,26 +155,14 @@ where
                 .iter()
                 .map(|i| ListItem::new(vec![Spans::from(Span::raw(*i))]))
                 .collect();
-            let tasks = List::new(tasks)
-                .block(Block::default().borders(Borders::ALL).title("List"))
-                .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-                .highlight_symbol("> ");
-            f.render_stateful_widget(tasks, chunks[0], &mut app.tasks.state);
 
             // Draw logs
             let info_style = Style::default().fg(Color::Blue);
             let warning_style = Style::default().fg(Color::Yellow);
             let error_style = Style::default().fg(Color::Magenta);
             let critical_style = Style::default().fg(Color::Red);
-            /*
-            let todos: Vec<ListItem> = app
-                .calendar
-                .todos_iter()
-                .map(|itm| {
-                    itm.get_value().unwrap()
-                })
-                .collect();
-            */
+
+
             let logs: Vec<ListItem> = app
                 .logs
                 .items
@@ -199,6 +181,12 @@ where
                     ListItem::new(content)
                 })
                 .collect();
+            let tasks = List::new(tasks)
+                .block(Block::default().borders(Borders::ALL).title("List"))
+                .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+                .highlight_symbol("> ");
+            f.render_stateful_widget(tasks, chunks[0], &mut app.tasks.state);
+
             let logs = List::new(logs).block(Block::default().borders(Borders::ALL).title("List"));
             f.render_stateful_widget(logs, chunks[1], &mut app.logs.state);
         }
