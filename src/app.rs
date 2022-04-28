@@ -14,8 +14,12 @@ use tui::{
     Terminal,
     widgets::ListState,
 };
+use chrono::prelude::*;
 
-use crate::calendar::Calendar;
+use crate::{
+    calendar::Calendar,
+    event::Event as CalEvent,
+};
 
 
 pub struct TabsState<'a> {
@@ -150,7 +154,7 @@ impl<'a> App<'a> {
 
     pub fn on_add_item(&mut self) {
         match self.tabs.index {
-            _ => self.calendar.add_event("1", "Some event").unwrap(),
+            _ => self.calendar.add_event(CalEvent::new(Utc::now(), Utc::now().with_hour(23).unwrap(), String::from("Test")).unwrap()).unwrap(),
             1 => self.calendar.add_todo("todo", "TODO").unwrap(),
         }
 
