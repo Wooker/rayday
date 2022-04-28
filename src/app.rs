@@ -18,7 +18,7 @@ use chrono::prelude::*;
 
 use crate::{
     calendar::Calendar,
-    event::Event as CalEvent,
+    event::{Event as CalEvent, EventTime as CalEventTime},
 };
 
 
@@ -154,7 +154,10 @@ impl<'a> App<'a> {
 
     pub fn on_add_item(&mut self) {
         match self.tabs.index {
-            _ => self.calendar.add_event(CalEvent::new(Utc::now(), Utc::now().with_hour(23).unwrap(), String::from("Test")).unwrap()).unwrap(),
+            _ => self.calendar.add_event(CalEvent::new(
+                    CalEventTime::new(Local::now(), Local::now().with_hour(23).unwrap()).unwrap(),
+                    String::from("Test"))
+                ).unwrap(),
             1 => self.calendar.add_todo("todo", "TODO").unwrap(),
         }
 
