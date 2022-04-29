@@ -98,8 +98,8 @@ impl Event {
         Event { time, description }
     }
 
-    pub fn time(&self) -> &EventTime {
-        &self.time
+    pub fn time(&self) -> EventTime {
+        self.time
     }
 
     pub fn desc(&self) -> &str {

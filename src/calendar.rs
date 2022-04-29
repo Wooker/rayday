@@ -121,6 +121,10 @@ impl Calendar {
         Ok(())
     }
 
+    pub fn get_event(&self, time: EventTime) -> Option<Event> {
+        self.events.get(format!("{}|{}", time.start_datetime().to_string(), time.end_datetime().to_string()).as_str())
+    }
+
     pub fn get_events_on_date(&self, date: Date<Local>) -> Vec<Event> {
         // Get EventTime as keys from db
         self.events

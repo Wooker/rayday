@@ -14,7 +14,7 @@ use std::{
 };
 use tui::{
     backend::{Backend, CrosstermBackend},
-    widgets::ListState,
+    widgets::{ListState, TableState},
     Terminal,
 };
 
@@ -100,7 +100,8 @@ pub struct App<'a> {
     pub tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
     pub calendar: Calendar,
-    pub events: StatefulList<CalEvent>,
+    pub events: StatefulList<CalEvent>, // change to ListState ??
+    pub dates_state: TableState,
 }
 
 impl<'a> App<'a> {
@@ -114,6 +115,7 @@ impl<'a> App<'a> {
             enhanced_graphics,
             calendar: cal,
             events,
+            dates_state: TableState::default(),
         }
     }
 
@@ -150,6 +152,9 @@ impl<'a> App<'a> {
             'd' => {
                 self.on_rem_item();
             }
+            'm' => {
+                self.dates_state.select(Some(0));
+            }
             _ => {}
         }
     }
@@ -178,7 +183,7 @@ impl<'a> App<'a> {
                 self.events.add(event.clone());
                 self
                 .calendar
-                .add_event(event)
+                .add_event(event.clone())
                 .unwrap();
             }
             1 => self.calendar.add_todo("todo", "TODO").unwrap(),
@@ -192,7 +197,10 @@ impl<'a> App<'a> {
                 let event = self.events.items.iter().nth(i).unwrap();
                 self
                 .calendar
-                .remove_event(*event.time()).unwrap();
+                .remove_event(event.time()).unwrap();
+                if i == self.events.items.len() - 1 {
+                    self.events.previous();
+                }
                 self.events.items.remove(i);
             },
 

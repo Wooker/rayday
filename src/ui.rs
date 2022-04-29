@@ -4,7 +4,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, Table, Row, Cell},
     Frame,
 };
 
@@ -104,25 +104,26 @@ where
 
     let info_style = Style::default().fg(Color::Blue);
 
-    let dates: Vec<ListItem> = (1..30)
-        .into_iter()
-        .map(|num| {
-            let s = info_style;
-            let row = 0;
-            let content = vec![Spans::from(vec![
-                Span::raw(num.to_string()),
-            ])];
-            ListItem::new(content)
-        })
-        .collect();
+    let dates: Vec<String> = (1i32..30).into_iter().map(|n| n.to_string()).collect();
+    let dates: Vec<&str> = dates.iter().map(|n| n.as_str()).collect();
+    let dates: Vec<&[&str]> = dates.chunks(7).collect();
 
-    let dates = List::new(dates)
-        .block(Block::default().borders(Borders::ALL).title("List"))
+    let rows = dates
+        .iter()
+        .map(|&week| {
+            Row::new(week.iter().map(|c| Cell::from(*c)))
+        });
+    let table = Table::new(rows)
+        .block(Block::default().borders(Borders::ALL).title("Dates"))
         .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-        .highlight_symbol("> ");
-    f.render_stateful_widget(dates, chunks[0], &mut app.events.state);
+        .widths(&[
+            Constraint::Length(3), Constraint::Length(3), Constraint::Length(3),
+            Constraint::Length(3), Constraint::Length(3), Constraint::Length(3),
+            Constraint::Length(3),
+        ]);
+    f.render_stateful_widget(table, chunks[0], &mut app.dates_state);
 
-    let events: Vec<ListItem> = app
+    let mut events: Vec<ListItem> = app
         .events
         .items
         .iter()
@@ -135,12 +136,10 @@ where
             ListItem::new(content)
         })
         .collect();
-
-    let tasks = List::new(events)
-        .block(Block::default().borders(Borders::ALL).title("List"))
-        .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-        .highlight_symbol("> ");
-    f.render_stateful_widget(tasks, chunks[1], &mut app.events.state);
+    let events = List::new(events)
+        .block(Block::default().borders(Borders::ALL).title("Events"))
+        .highlight_style(Style::default().add_modifier(Modifier::BOLD));
+    f.render_stateful_widget(events, chunks[1], &mut app.events.state);
 }
 
 fn draw_second_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
