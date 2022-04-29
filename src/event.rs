@@ -23,7 +23,7 @@ pub enum EventTimeError {
     Unknown,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Copy, Clone)]
 pub struct EventTime {
     start: DateTime<Local>,
     end: DateTime<Local>,
@@ -87,7 +87,7 @@ impl Today for EventTime {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Event {
     time: EventTime,
     description: String,

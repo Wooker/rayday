@@ -97,39 +97,50 @@ where
     B: Backend,
 {
     let chunks = Layout::default()
-        .constraints([Constraint::Min(8), Constraint::Length(7)].as_ref())
+        .constraints([Constraint::Length(24), Constraint::Min(10)].as_ref())
+        .direction(Direction::Horizontal)
         .split(area);
-    {
-        let chunks = Layout::default()
-            .constraints([Constraint::Length(5), Constraint::Percentage(50)].as_ref())
-            .split(chunks[0]);
-        draw_text(f, chunks[0]);
+    //draw_text(f, chunks[0]);
 
-        let info_style = Style::default().fg(Color::Blue);
-        //let today = Local::today();
-        //let events: Vec<Event> = app.calendar.get_events_on_date(today);
+    let info_style = Style::default().fg(Color::Blue);
 
-        let events: Vec<ListItem> = app
-            .events
-            .items
-            .iter()
-            .map(|itm| {
-                let s = info_style;
-                let content = vec![Spans::from(vec![
-                    Span::styled(format!("{}|{}: ", itm.time().start_datetime(), itm.time().end_datetime()), s),
-                    Span::raw(itm.desc()),
-                ])];
-                ListItem::new(content)
-            })
-            .collect();
+    let dates: Vec<ListItem> = (1..30)
+        .into_iter()
+        .map(|num| {
+            let s = info_style;
+            let row = 0;
+            let content = vec![Spans::from(vec![
+                Span::raw(num.to_string()),
+            ])];
+            ListItem::new(content)
+        })
+        .collect();
 
-        let tasks = List::new(events)
-            .block(Block::default().borders(Borders::ALL).title("List"))
-            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-            .highlight_symbol("> ");
-        f.render_stateful_widget(tasks, chunks[1], &mut app.events.state);
-    }
-    draw_text(f, chunks[1]);
+    let dates = List::new(dates)
+        .block(Block::default().borders(Borders::ALL).title("List"))
+        .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+        .highlight_symbol("> ");
+    f.render_stateful_widget(dates, chunks[0], &mut app.events.state);
+
+    let events: Vec<ListItem> = app
+        .events
+        .items
+        .iter()
+        .map(|itm| {
+            let s = info_style;
+            let content = vec![Spans::from(vec![
+                Span::styled(format!("{}|{}: ", itm.time().start_datetime(), itm.time().end_datetime()), s),
+                Span::raw(itm.desc()),
+            ])];
+            ListItem::new(content)
+        })
+        .collect();
+
+    let tasks = List::new(events)
+        .block(Block::default().borders(Borders::ALL).title("List"))
+        .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+        .highlight_symbol("> ");
+    f.render_stateful_widget(tasks, chunks[1], &mut app.events.state);
 }
 
 fn draw_second_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)

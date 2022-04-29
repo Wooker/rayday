@@ -10,7 +10,7 @@ use crossterm::{
 use std::{
     error::Error,
     io,
-    time::{Duration, Instant},
+    time::{Duration, Instant}, borrow::Borrow,
 };
 use tui::{
     backend::{Backend, CrosstermBackend},
@@ -59,6 +59,10 @@ impl<T> StatefulList<T> {
             state: ListState::default(),
             items,
         }
+    }
+
+    pub fn add(&mut self, item: T) {
+        self.items.push(item);
     }
 
     pub fn next(&mut self) {
@@ -166,23 +170,33 @@ impl<'a> App<'a> {
 
     pub fn on_add_item(&mut self) {
         match self.tabs.index {
-            _ => self
+            _ => {
+                let event = CalEvent::new(
+                    CalEventTime::now(chrono::Duration::minutes(30)),
+                    String::from("Test")
+                );
+                self.events.add(event.clone());
+                self
                 .calendar
-                .add_event(CalEvent::new(
-                        CalEventTime::now(chrono::Duration::minutes(30)),
-                    String::from("Test"),
-                ))
-                .unwrap(),
+                .add_event(event)
+                .unwrap();
+            }
             1 => self.calendar.add_todo("todo", "TODO").unwrap(),
         }
     }
 
     pub fn on_rem_item(&mut self) {
         match self.tabs.index {
-            0 => self
+            0 => {
+                let i = self.events.state.selected().unwrap();
+                let event = self.events.items.iter().nth(i).unwrap();
+                self
                 .calendar
-                .remove_event(CalEventTime::now(ChronoDuration::minutes(30))).unwrap(),
-            _ => true,
+                .remove_event(*event.time()).unwrap();
+                self.events.items.remove(i);
+            },
+
+            _ => (),
             //1 => self.calendar.add_todo("todo", "TODO").unwrap(),
         };
     }
