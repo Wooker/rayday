@@ -14,6 +14,7 @@ enum Periodicity {
 
 pub trait Today {
     fn today(hours: u32, minutes: u32, d: Duration) -> EventTime;
+    fn now(d: Duration) -> EventTime;
 }
 
 #[derive(Debug)]
@@ -74,6 +75,14 @@ impl Today for EventTime {
         EventTime {
             start: today,
             end: today.checked_add_signed(d).unwrap(),
+        }
+    }
+
+    fn now(d: Duration) -> EventTime {
+        let now =Local::now().with_nanosecond(0).unwrap();
+        EventTime {
+            start: now,
+            end: now.checked_add_signed(d).unwrap()
         }
     }
 }

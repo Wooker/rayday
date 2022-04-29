@@ -106,14 +106,17 @@ where
         draw_text(f, chunks[0]);
 
         let info_style = Style::default().fg(Color::Blue);
-        let today = Local::today();
-        let events: Vec<Event> = app.calendar.get_events_on_date(today);
-        let events: Vec<ListItem> = events
+        //let today = Local::today();
+        //let events: Vec<Event> = app.calendar.get_events_on_date(today);
+
+        let events: Vec<ListItem> = app
+            .events
+            .items
             .iter()
             .map(|itm| {
                 let s = info_style;
                 let content = vec![Spans::from(vec![
-                    Span::styled(format!("{}|{}: ", itm.time().start_date(), itm.time().end_date()), s),
+                    Span::styled(format!("{}|{}: ", itm.time().start_datetime(), itm.time().end_datetime()), s),
                     Span::raw(itm.desc()),
                 ])];
                 ListItem::new(content)
@@ -124,7 +127,7 @@ where
             .block(Block::default().borders(Borders::ALL).title("List"))
             .highlight_style(Style::default().add_modifier(Modifier::BOLD))
             .highlight_symbol("> ");
-        f.render_stateful_widget(tasks, chunks[1], &mut app.tasks.state);
+        f.render_stateful_widget(tasks, chunks[1], &mut app.events.state);
     }
     draw_text(f, chunks[1]);
 }
@@ -148,14 +151,6 @@ where
                 .direction(Direction::Horizontal)
                 .split(chunks[0]);
 
-            // Draw tasks
-            let tasks: Vec<ListItem> = app
-                .tasks
-                .items
-                .iter()
-                .map(|i| ListItem::new(vec![Spans::from(Span::raw(*i))]))
-                .collect();
-
             // Draw logs
             let info_style = Style::default().fg(Color::Blue);
             let warning_style = Style::default().fg(Color::Yellow);
@@ -163,32 +158,6 @@ where
             let critical_style = Style::default().fg(Color::Red);
 
 
-            let logs: Vec<ListItem> = app
-                .logs
-                .items
-                .iter()
-                .map(|&(evt, level)| {
-                    let s = match level {
-                        "ERROR" => error_style,
-                        "CRITICAL" => critical_style,
-                        "WARNING" => warning_style,
-                        _ => info_style,
-                    };
-                    let content = vec![Spans::from(vec![
-                        Span::styled(format!("{:<9}", level), s),
-                        Span::raw(evt),
-                    ])];
-                    ListItem::new(content)
-                })
-                .collect();
-            let tasks = List::new(tasks)
-                .block(Block::default().borders(Borders::ALL).title("List"))
-                .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-                .highlight_symbol("> ");
-            f.render_stateful_widget(tasks, chunks[0], &mut app.tasks.state);
-
-            let logs = List::new(logs).block(Block::default().borders(Borders::ALL).title("List"));
-            f.render_stateful_widget(logs, chunks[1], &mut app.logs.state);
         }
     }
 }

@@ -23,6 +23,9 @@ use crate::{
     event::{Event as CalEvent, EventTime as CalEventTime, Today},
 };
 
+use chrono::Duration as ChronoDuration;
+use pickledb::error::Result as PickleResult;
+
 pub struct TabsState<'a> {
     pub titles: Vec<&'a str>,
     pub index: usize,
@@ -91,31 +94,31 @@ pub struct App<'a> {
     pub title: &'a str,
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
-    pub tasks: StatefulList<&'a str>,
-    pub logs: StatefulList<(&'a str, &'a str)>,
     pub enhanced_graphics: bool,
     pub calendar: Calendar,
+    pub events: StatefulList<CalEvent>,
 }
 
 impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
+        let cal = Calendar::new().unwrap();
+        let events = cal.events_stateful_list(Local::today());
         App {
             title,
             should_quit: false,
             tabs: TabsState::new(vec!["Calendar", "Todo"]),
-            tasks: StatefulList::with_items(["A", "B", "C"].to_vec()),
-            logs: StatefulList::with_items([("A", "A"), ("B", "B")].to_vec()),
-            calendar: Calendar::new().unwrap(),
             enhanced_graphics,
+            calendar: cal,
+            events,
         }
     }
 
     pub fn on_up(&mut self) {
-        self.tasks.previous();
+        self.events.previous();
     }
 
     pub fn on_down(&mut self) {
-        self.tasks.next();
+        self.events.next();
     }
 
     pub fn on_right(&mut self) {
@@ -140,13 +143,15 @@ impl<'a> App<'a> {
             'a' => {
                 self.on_add_item();
             }
+            'd' => {
+                self.on_rem_item();
+            }
             _ => {}
         }
     }
 
     pub fn on_ctrl_key(&mut self, c: char) {
-        match c {
-            'h' => {
+        match c { 'h' => {
                 self.on_left();
             }
             'l' => {
@@ -157,8 +162,6 @@ impl<'a> App<'a> {
     }
 
     pub fn on_tick(&mut self) {
-        let log = self.logs.items.pop().unwrap();
-        self.logs.items.insert(0, log);
     }
 
     pub fn on_add_item(&mut self) {
@@ -166,12 +169,22 @@ impl<'a> App<'a> {
             _ => self
                 .calendar
                 .add_event(CalEvent::new(
-                        CalEventTime::today(10, 0, chrono::Duration::minutes(30)),
+                        CalEventTime::now(chrono::Duration::minutes(30)),
                     String::from("Test"),
                 ))
                 .unwrap(),
             1 => self.calendar.add_todo("todo", "TODO").unwrap(),
         }
+    }
+
+    pub fn on_rem_item(&mut self) {
+        match self.tabs.index {
+            0 => self
+                .calendar
+                .remove_event(CalEventTime::now(ChronoDuration::minutes(30))).unwrap(),
+            _ => true,
+            //1 => self.calendar.add_todo("todo", "TODO").unwrap(),
+        };
     }
 }
 
