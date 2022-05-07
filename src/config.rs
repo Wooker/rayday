@@ -10,6 +10,7 @@ use std::{
 
 use chrono::prelude::*;
 use serde_derive::{Serialize, Deserialize};
+use tui::style::Color;
 
 use crate::{
     event::{Event, EventTime, EventTimeError, Today},
@@ -30,13 +31,13 @@ const TODOS_NAME: &str = "todos.db";
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
-    pub color: String,
+    pub color: Color, //TODO tui feature "serde"
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            color: String::from("blue")
+            color: Color::LightBlue
         }
     }
 }

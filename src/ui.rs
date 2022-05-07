@@ -125,28 +125,8 @@ where
             DayListItem::new("15"),
         ])
         .block(Block::default().borders(Borders::ALL).title("Calendar"))
-        .highlight_style(match app.files.config.color.as_str() {
-            "reset" => Style::default().bg(Color::Reset),
-            "black" => Style::default().bg(Color::Black),
-            "red" => Style::default().bg(Color::Red),
-            "green" => Style::default().bg(Color::Green),
-            "yellow" => Style::default().bg(Color::Yellow),
-            "blue" => Style::default().bg(Color::Blue),
-            "magenta" => Style::default().bg(Color::Magenta),
-            "cyan" => Style::default().bg(Color::Cyan),
-            "gray" => Style::default().bg(Color::Gray),
-            "dark gray" => Style::default().bg(Color::DarkGray),
-            "light red" => Style::default().bg(Color::LightRed),
-            "light green" => Style::default().bg(Color::LightGreen),
-            "light yellow" => Style::default().bg(Color::LightYellow),
-            "light blue" => Style::default().bg(Color::LightBlue),
-            "light magenta" => Style::default().bg(Color::LightMagenta),
-            "light cyan" => Style::default().bg(Color::LightCyan),
-            "white" => Style::default().bg(Color::White),
-            //Rgb(u8, u8, u8),
-            //Indexed(u8),
-            _ => Style::default().add_modifier(Modifier::BOLD)
-        });
+        .highlight_style(Style::default().bg(app.files.config.color).add_modifier(Modifier::BOLD));
+            //_ => Style::default().add_modifier(Modifier::BOLD)
     f.render_stateful_widget(days, chunks[0], &mut app.days_state);
 
     let mut events: Vec<ListItem> = app
