@@ -200,8 +200,9 @@ impl<'a> StatefulWidget for List<'a> {
                 buf.set_spans(area.x, area.y, line, area.width);
             }
             if is_selected {
-                let style = Style::default().bg(Color::Blue);
-                buf.set_style(area, style);
+                //let style = Style::default().bg(Color::Blue);
+                //buf.set_style(area, style);
+                buf.set_style(area, self.highlight_style);
             }
         }
         /*

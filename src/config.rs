@@ -1,12 +1,15 @@
 use anyhow::{anyhow, Error, Result};
-use config::{Config, ConfigError, Map, Source, Value};
+//use config::{Config, ConfigError, Map, Source, Value};
+use confy::{load_path, store_path};
 use std::{
     collections::HashMap,
     fs,
     path::{Path, PathBuf},
+    default::Default,
 };
 
 use chrono::prelude::*;
+use serde_derive::{Serialize, Deserialize};
 
 use crate::{
     event::{Event, EventTime, EventTimeError, Today},
@@ -25,15 +28,29 @@ const CONFIG_NAME: &str = "config.yml";
 const EVENTS_NAME: &str = "events.db";
 const TODOS_NAME: &str = "todos.db";
 
-pub struct Calendar {
+#[derive(Serialize, Deserialize)]
+pub struct Config {
+    pub color: String,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            color: String::from("blue")
+        }
+    }
+}
+
+pub struct Files {
     config_dir: PathBuf,
-    config: Config,
+    pub config: Config,
     events: PickleDb,
     todos: PickleDb,
 }
 
-impl Calendar {
-    pub fn new() -> Result<Calendar, Error> {
+
+impl Files {
+    pub fn new() -> Result<Files, Error> {
         match dirs::home_dir() {
             Some(home) => {
                 let path = Path::new(&home);
@@ -48,11 +65,13 @@ impl Calendar {
                     fs::create_dir(&home_config_dir)?;
                 }
 
+                let mut config: Config;
                 let mut events_db: PickleDb;
                 let mut todos_db: PickleDb;
                 if !app_config_dir.is_dir() {
                     fs::create_dir(&app_config_dir)?;
-                    fs::File::create(config_file_path);
+                    //fs::File::create(config_file_path);
+                    config = Config::default();
                     events_db = PickleDb::new(
                         events_file_path,
                         PickleDbDumpPolicy::AutoDump,
@@ -64,6 +83,7 @@ impl Calendar {
                         SerializationMethod::Json,
                     );
                 } else {
+                    config = load_path(config_file_path).unwrap();
                     events_db = PickleDb::load(
                         events_file_path,
                         PickleDbDumpPolicy::AutoDump,
@@ -78,12 +98,9 @@ impl Calendar {
                     .unwrap();
                 }
 
-                Ok(Calendar {
+                Ok(Files {
                     config_dir: app_config_dir,
-                    config: Config::builder()
-                        .add_source(config::File::from(config_file_path.to_path_buf()))
-                        .build()
-                        .unwrap(),
+                    config,
                     events: events_db,
                     todos: todos_db,
                 })
@@ -178,7 +195,7 @@ mod tests {
 
     #[test]
     fn config() {
-        let mut cal = Calendar::new().unwrap();
+        let mut cal = Files::new().unwrap();
         let mut map = HashMap::new();
 
         assert_eq!(
@@ -191,7 +208,7 @@ mod tests {
 
     #[test]
     fn add_event() {
-        let mut cal = Calendar::new().unwrap();
+        let mut cal = Files::new().unwrap();
 
 
         cal.add_event(Event::new(EventTime::today(12, 0, Duration::minutes(30)), "Event today!".to_string()));

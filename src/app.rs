@@ -19,7 +19,7 @@ use tui::{
 };
 
 use crate::{
-    calendar::Calendar,
+    config::Files,
     event::{Event as CalEvent, EventTime as CalEventTime, Today},
     widgets::calendar::ListState as DayListState,
 };
@@ -147,7 +147,7 @@ pub struct App<'a> {
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
-    pub calendar: Calendar,
+    pub files: Files,
     pub events: StatefulList<CalEvent>, // change to ListState ??
     pub dates_state: TableState,
     pub days_state: DayListState,
@@ -155,15 +155,16 @@ pub struct App<'a> {
 
 impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
-        let cal = Calendar::new().unwrap();
-        let events = cal.events_stateful_list(Local::today());
+        let files = Files::new().unwrap();
+        let events = files.events_stateful_list(Local::today());
         App {
             title,
             should_quit: false,
             tabs: TabsState::new(vec!["Calendar", "Todo"]),
             enhanced_graphics,
-            calendar: cal,
+            files,
             events,
+            // days: StatefulList::with_items(Calendar::from_today(60)) // 60 days
             dates_state: TableState::default(),
             days_state: DayListState::default(),
         }
@@ -247,11 +248,11 @@ impl<'a> App<'a> {
                 );
                 self.events.add(event.clone());
                 self
-                .calendar
+                .files
                 .add_event(event.clone())
                 .unwrap();
             }
-            1 => self.calendar.add_todo("todo", "TODO").unwrap(),
+            1 => self.files.add_todo("todo", "TODO").unwrap(),
         }
     }
 
@@ -261,7 +262,7 @@ impl<'a> App<'a> {
                 let i = self.events.state.selected().unwrap();
                 let event = self.events.items.iter().nth(i).unwrap();
                 self
-                .calendar
+                .files
                 .remove_event(event.time()).unwrap();
                 if i == self.events.items.len() - 1 {
                     self.events.previous();
