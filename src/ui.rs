@@ -1,10 +1,14 @@
-use crate::app::App;
+use crate::{
+    app::App,
+    widgets::calendar::{List as DayList, ListItem as DayListItem},
+};
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, Table, Row, Cell},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, Table, Row, Cell, StatefulWidget, ListState},
+    buffer::Buffer,
     Frame,
 };
 
@@ -100,28 +104,55 @@ where
         .constraints([Constraint::Length(24), Constraint::Min(10)].as_ref())
         .direction(Direction::Horizontal)
         .split(area);
-    //draw_text(f, chunks[0]);
 
     let info_style = Style::default().fg(Color::Blue);
 
-    let dates: Vec<String> = (1i32..30).into_iter().map(|n| n.to_string()).collect();
-    let dates: Vec<&str> = dates.iter().map(|n| n.as_str()).collect();
-    let dates: Vec<&[&str]> = dates.chunks(7).collect();
+    {
+        let chunks = Layout::default()
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .direction(Direction::Vertical)
+            .split(chunks[0]);
 
-    let rows = dates
-        .iter()
-        .map(|&week| {
-            Row::new(week.iter().map(|c| Cell::from(*c)))
-        });
-    let table = Table::new(rows)
-        .block(Block::default().borders(Borders::ALL).title("Dates"))
-        .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-        .widths(&[
-            Constraint::Length(3), Constraint::Length(3), Constraint::Length(3),
-            Constraint::Length(3), Constraint::Length(3), Constraint::Length(3),
-            Constraint::Length(3),
-        ]);
-    f.render_stateful_widget(table, chunks[0], &mut app.dates_state);
+        let dates: Vec<String> = (1i32..30).into_iter().map(|n| n.to_string()).collect();
+        let dates: Vec<&str> = dates.iter().map(|n| n.as_str()).collect();
+        let dates: Vec<&[&str]> = dates.chunks(7).collect();
+
+        let rows = dates
+            .iter()
+            .map(|&week| {
+                Row::new(week.iter().map(|c| Cell::from(*c)))
+            });
+        let table = Table::new(rows)
+            .block(Block::default().borders(Borders::ALL).title("Dates"))
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+            .widths(&[
+                Constraint::Length(3), Constraint::Length(3), Constraint::Length(3),
+                Constraint::Length(3), Constraint::Length(3), Constraint::Length(3),
+                Constraint::Length(3),
+            ]);
+        f.render_stateful_widget(table, chunks[0], &mut app.dates_state);
+
+        let mut days = DayList::new(vec![
+                DayListItem::new("1"),
+                DayListItem::new("2"),
+                DayListItem::new("3"),
+                DayListItem::new("4"),
+                DayListItem::new("5"),
+                DayListItem::new("6"),
+                DayListItem::new("7"),
+                DayListItem::new("8"),
+                DayListItem::new("9"),
+                DayListItem::new("10"),
+                DayListItem::new("11"),
+                DayListItem::new("12"),
+                DayListItem::new("13"),
+                DayListItem::new("14"),
+                DayListItem::new("15"),
+            ])
+            .block(Block::default().borders(Borders::ALL).title("Custom dates"))
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD));
+        f.render_stateful_widget(days, chunks[1], &mut app.days_state);
+    }
 
     let mut events: Vec<ListItem> = app
         .events

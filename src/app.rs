@@ -21,6 +21,7 @@ use tui::{
 use crate::{
     calendar::Calendar,
     event::{Event as CalEvent, EventTime as CalEventTime, Today},
+    widgets::calendar::ListState as DayListState,
 };
 
 use chrono::Duration as ChronoDuration;
@@ -94,6 +95,53 @@ impl<T> StatefulList<T> {
     }
 }
 
+pub struct StatefulDayList<T> {
+    pub state: ListState,
+    pub items: Vec<T>,
+}
+
+impl<T> StatefulDayList<T> {
+    pub fn with_items(items: Vec<T>) -> StatefulList<T> {
+        StatefulList {
+            state: ListState::default(),
+            items,
+        }
+    }
+
+    pub fn add(&mut self, item: T) {
+        self.items.push(item);
+    }
+
+    pub fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i >= self.items.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    pub fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.items.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+}
+
+
 pub struct App<'a> {
     pub title: &'a str,
     pub should_quit: bool,
@@ -102,6 +150,7 @@ pub struct App<'a> {
     pub calendar: Calendar,
     pub events: StatefulList<CalEvent>, // change to ListState ??
     pub dates_state: TableState,
+    pub days_state: DayListState,
 }
 
 impl<'a> App<'a> {
@@ -116,23 +165,36 @@ impl<'a> App<'a> {
             calendar: cal,
             events,
             dates_state: TableState::default(),
+            days_state: DayListState::default(),
         }
     }
 
     pub fn on_up(&mut self) {
-        self.events.previous();
+        if let Some(selected) = self.days_state.selected() {
+            self.days_state.select(selected.checked_sub(7));
+        } else {
+            self.days_state.select(Some(0));
+        }
+        //self.events.previous();
     }
 
     pub fn on_down(&mut self) {
-        self.events.next();
+        if let Some(selected) = self.days_state.selected() {
+            self.days_state.select(selected.checked_add(7));
+        } else {
+            self.days_state.select(Some(0));
+        }
+        //self.events.next();
     }
 
     pub fn on_right(&mut self) {
-        self.tabs.next();
+        let selected = self.days_state.selected().unwrap_or(0);
+        self.days_state.select(selected.checked_add(1));
     }
 
     pub fn on_left(&mut self) {
-        self.tabs.previous();
+        let selected = self.days_state.selected().unwrap_or(0);
+        self.days_state.select(selected.checked_sub(1));
     }
 
     pub fn on_key(&mut self, c: char) {
@@ -146,14 +208,17 @@ impl<'a> App<'a> {
             'k' => {
                 self.on_up();
             }
+            'h' => {
+                self.on_left();
+            }
+            'l' => {
+                self.on_right();
+            }
             'a' => {
                 self.on_add_item();
             }
             'd' => {
                 self.on_rem_item();
-            }
-            'm' => {
-                self.dates_state.select(Some(0));
             }
             _ => {}
         }
