@@ -196,15 +196,9 @@ mod tests {
 
     #[test]
     fn config() {
-        let mut cal = Files::new().unwrap();
-        let mut map = HashMap::new();
+        let mut files = Files::new().unwrap();
 
-        assert_eq!(
-            map,
-            cal.config
-                .try_deserialize::<HashMap<String, String>>()
-                .unwrap()
-        );
+        assert_eq!(Color::LightBlue, files.config.color);
     }
 
     #[test]

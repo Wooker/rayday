@@ -3,9 +3,11 @@
 
 mod app;
 mod config;
+mod calendar;
 mod event;
 mod ui;
 mod widgets;
+mod lib;
 
 use app::run;
 

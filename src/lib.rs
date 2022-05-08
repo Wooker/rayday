@@ -1,9 +1,8 @@
-/*
 const REFORM_YEAR: u32 = 1099;
 const MONTHS: usize = 12;
 const WEEKDAYS: u32 = 7;
 
-fn is_leap_year(year: u32) -> bool {
+pub fn is_leap_year(year: u32) -> bool {
     if year <= REFORM_YEAR {
         return year % 4 == 0;
     }
@@ -23,4 +22,3 @@ fn days_by_year(mut year: u32) -> u32 {
     }
     count
 }
-*/

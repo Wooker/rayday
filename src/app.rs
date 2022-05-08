@@ -20,6 +20,7 @@ use tui::{
 
 use crate::{
     config::Files,
+    calendar::Calendar,
     event::{Event as CalEvent, EventTime as CalEventTime, Today},
     widgets::calendar::ListState as DayListState,
 };
@@ -148,8 +149,9 @@ pub struct App<'a> {
     pub tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
     pub files: Files,
-    pub events: StatefulList<CalEvent>, // change to ListState ??
-    pub dates_state: TableState,
+    pub events: StatefulList<CalEvent>,
+    pub calendar: Calendar,
+    //pub days: StatefulList<Date<Local>>,
     pub days_state: DayListState,
 }
 
@@ -157,6 +159,7 @@ impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
         let files = Files::new().unwrap();
         let events = files.events_stateful_list(Local::today());
+        let calendar = Calendar::new();
         App {
             title,
             should_quit: false,
@@ -164,8 +167,8 @@ impl<'a> App<'a> {
             enhanced_graphics,
             files,
             events,
-            // days: StatefulList::with_items(Calendar::from_today(60)) // 60 days
-            dates_state: TableState::default(),
+            //days: StatefulList::with_items(calendar.from_today(2)), // 2 weeks
+            calendar,
             days_state: DayListState::default(),
         }
     }

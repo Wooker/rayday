@@ -107,27 +107,15 @@ where
 
     let info_style = Style::default().fg(Color::Blue);
 
-    let mut days = DayList::new(vec![
-            DayListItem::new("1"),
-            DayListItem::new("2"),
-            DayListItem::new("3"),
-            DayListItem::new("4"),
-            DayListItem::new("5"),
-            DayListItem::new("6"),
-            DayListItem::new("7"),
-            DayListItem::new("8"),
-            DayListItem::new("9"),
-            DayListItem::new("10"),
-            DayListItem::new("11"),
-            DayListItem::new("12"),
-            DayListItem::new("13"),
-            DayListItem::new("14"),
-            DayListItem::new("15"),
-        ])
+    let mut d = DayList::new(app.calendar.from_today(1)
+        .iter()
+        .map(|day| DayListItem::new(day.day().to_string()))
+        .collect::<Vec<DayListItem>>()
+        )
         .block(Block::default().borders(Borders::ALL).title("Calendar"))
         .highlight_style(Style::default().bg(app.files.config.color).add_modifier(Modifier::BOLD));
-            //_ => Style::default().add_modifier(Modifier::BOLD)
-    f.render_stateful_widget(days, chunks[0], &mut app.days_state);
+
+    f.render_stateful_widget(d, chunks[0], &mut app.days_state);
 
     let mut events: Vec<ListItem> = app
         .events
