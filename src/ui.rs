@@ -1,6 +1,6 @@
 use crate::{
     app::App,
-    widgets::calendar::{List as DayList, ListItem as DayListItem},
+    widgets::calendar::{List as DayList, ListItem as DayListItem, CalendarWidget},
 };
 use tui::{
     backend::Backend,
@@ -107,15 +107,27 @@ where
 
     let info_style = Style::default().fg(Color::Blue);
 
-    let mut d = DayList::new(app.calendar.from_today(1)
-        .iter()
-        .map(|day| DayListItem::new(day.day().to_string()))
-        .collect::<Vec<DayListItem>>()
-        )
-        .block(Block::default().borders(Borders::ALL).title("Calendar"))
-        .highlight_style(Style::default().bg(app.files.config.color).add_modifier(Modifier::BOLD));
+    {
+        let chunks = Layout::default()
+            .constraints([Constraint::Length(24), Constraint::Min(10)].as_ref())
+            .direction(Direction::Horizontal)
+            .split(chunks[0]);
 
-    f.render_stateful_widget(d, chunks[0], &mut app.days_state);
+        let mut calendar = CalendarWidget::new(app.calendar.from_today(5))
+            .block(Block::default().borders(Borders::ALL).title("Calendar Widget"))
+            .highlight_style(Style::default().bg(app.files.config.color).add_modifier(Modifier::BOLD));
+        f.render_widget(calendar, chunks[0]);
+
+        let mut days = DayList::new(app.calendar.from_today(5).0
+            .iter()
+            .map(|day| DayListItem::new(day.day().to_string()))
+            .collect::<Vec<DayListItem>>()
+            )
+            .block(Block::default().borders(Borders::ALL).title("Calendar"))
+            .highlight_style(Style::default().bg(app.files.config.color).add_modifier(Modifier::BOLD));
+
+        f.render_stateful_widget(days, chunks[1], &mut app.days_state);
+    }
 
     let mut events: Vec<ListItem> = app
         .events

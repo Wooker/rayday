@@ -12,33 +12,29 @@ impl Calendar {
         }
     }
 
-    pub fn from_today(&self, weeks: u16) -> Vec<Date<Local>> {
-        let mut before = self.date.checked_sub_signed(Duration::weeks(weeks as i64)).unwrap();
-        let after = self.date.checked_add_signed(Duration::weeks(weeks as i64)).unwrap();
-        /*
-        let (f_year, f_month) = (before.year(), before.month());
-        let (l_year, l_month) = (after.year(), after.month());
-        while 
-        let dayas_in_month = match month {
-            2 => {
-                if is_leap_year(year as u32) {
-                    29
-                } else {
-                    28
-                }
-            },
-            1 | 3 | 5| 7 | 9 | 11 => 31,
-            _ => 30,
-        };
-        */
+    pub fn from_today(&self, weeks: u16) -> (Vec<Date<Local>>, (usize, usize)) {
+        let curr_monday = self.date.checked_sub_signed(
+            Duration::days(self.date.weekday().num_days_from_monday().into())
+            ).unwrap();
+        let curr_sunday = self.date.checked_add_signed(
+            Duration::days(6i64 - self.date.weekday().num_days_from_monday() as i64)
+            ).unwrap();
+        let mut before = curr_monday.checked_sub_signed(Duration::weeks(weeks as i64)).unwrap();
+        let after = curr_sunday.checked_add_signed(Duration::weeks(weeks as i64)).unwrap();
+
         let mut days: Vec<Date<Local>> = Vec::new();
 
+        let (mut month, mut day): (usize, usize) = (0, 0);
+
         while before.le(&after) {
+            if before.eq(&self.date) {
+                (month, day) = (before.month() as usize, before.day() as usize);
+            }
             days.push(before);
             before = before.succ();
         }
 
-        days
+        (days, (month, day))
     }
 }
 
@@ -48,10 +44,5 @@ mod tests {
 
     #[test]
     fn from_today() {
-        let cal = Calendar::new();
-        let days = cal.from_today(2);
-
-        dbg!(&days);
-        assert_eq!(days.len(), 29);
     }
 }
