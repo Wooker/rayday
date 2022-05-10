@@ -151,6 +151,7 @@ pub struct App<'a> {
     pub files: Files,
     pub events: StatefulList<CalEvent>,
     pub calendar: Calendar,
+    pub chosen_date: (usize, usize),
     //pub days: StatefulList<Date<Local>>,
     pub days_state: DayListState,
 }
@@ -169,10 +170,12 @@ impl<'a> App<'a> {
             events,
             //days: StatefulList::with_items(calendar.from_today(2)), // 2 weeks
             calendar,
+            chosen_date: (0, 0),
             days_state: DayListState::default(),
         }
     }
 
+    /*
     pub fn on_up(&mut self) {
         if let Some(selected) = self.days_state.selected() {
             self.days_state.select(selected.checked_sub(7));
@@ -199,6 +202,23 @@ impl<'a> App<'a> {
     pub fn on_left(&mut self) {
         let selected = self.days_state.selected().unwrap_or(0);
         self.days_state.select(selected.checked_sub(1));
+    }
+    */
+
+    pub fn on_up(&mut self) {
+        self.chosen_date.1.checked_sub(7).unwrap_or_else(|| self.chosen_date.0.checked_sub(1).unwrap_or(0));
+    }
+
+    pub fn on_down(&mut self) {
+        self.chosen_date.1.checked_add(7).unwrap_or_else(|| self.chosen_date.0.checked_add(1).unwrap_or(0));
+    }
+
+    pub fn on_right(&mut self) {
+        self.chosen_date.1 += 1;
+    }
+
+    pub fn on_left(&mut self) {
+        self.chosen_date.1.checked_sub(1).unwrap_or_else(|| self.chosen_date.0.checked_sub(1).unwrap_or(0));
     }
 
     pub fn on_key(&mut self, c: char) {

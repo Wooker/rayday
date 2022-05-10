@@ -109,14 +109,15 @@ where
 
     {
         let chunks = Layout::default()
-            .constraints([Constraint::Length(24), Constraint::Min(10)].as_ref())
-            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .direction(Direction::Vertical)
             .split(chunks[0]);
 
         let mut calendar = CalendarWidget::new(app.calendar.from_today(5))
             .block(Block::default().borders(Borders::ALL).title("Calendar Widget"))
             .highlight_style(Style::default().bg(app.files.config.color).add_modifier(Modifier::BOLD));
-        f.render_widget(calendar, chunks[0]);
+        app.chosen_date = calendar.get_date();
+        f.render_stateful_widget(calendar, chunks[0], &mut app.chosen_date);
 
         let mut days = DayList::new(app.calendar.from_today(5).0
             .iter()

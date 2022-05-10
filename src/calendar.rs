@@ -1,6 +1,7 @@
 use chrono::{Date, Local, Duration, Datelike};
 use crate::lib::*;
 
+#[derive(Debug)]
 pub struct Calendar {
     date: Date<Local>,
 }
@@ -35,6 +36,10 @@ impl Calendar {
         }
 
         (days, (month, day))
+    }
+
+    pub fn get_date(&self) -> Date<Local> {
+        self.date
     }
 }
 
