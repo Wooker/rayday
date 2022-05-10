@@ -22,7 +22,6 @@ use crate::{
     config::Files,
     calendar::Calendar,
     event::{Event as CalEvent, EventTime as CalEventTime, Today},
-    widgets::calendar::ListState as DayListState,
 };
 
 use chrono::Duration as ChronoDuration;
@@ -151,9 +150,8 @@ pub struct App<'a> {
     pub files: Files,
     pub events: StatefulList<CalEvent>,
     pub calendar: Calendar,
-    pub chosen_date: (usize, usize),
+    pub chosen_date: (u32, u32),
     //pub days: StatefulList<Date<Local>>,
-    pub days_state: DayListState,
 }
 
 impl<'a> App<'a> {
@@ -169,56 +167,45 @@ impl<'a> App<'a> {
             files,
             events,
             //days: StatefulList::with_items(calendar.from_today(2)), // 2 weeks
+            chosen_date: Calendar::today(),
             calendar,
-            chosen_date: (0, 0),
-            days_state: DayListState::default(),
         }
     }
 
-    /*
     pub fn on_up(&mut self) {
-        if let Some(selected) = self.days_state.selected() {
-            self.days_state.select(selected.checked_sub(7));
+        if let Some(day) = self.chosen_date.1.checked_sub(7) {
+            self.chosen_date.1 = day;
         } else {
-            self.days_state.select(Some(0));
+            self.chosen_date.0 -= 1;
+            self.chosen_date.1 = 1;
         }
-        //self.events.previous();
     }
 
     pub fn on_down(&mut self) {
-        if let Some(selected) = self.days_state.selected() {
-            self.days_state.select(selected.checked_add(7));
+        if self.chosen_date.1 + 7 <= 31 {
+            self.chosen_date.1 += 7;
         } else {
-            self.days_state.select(Some(0));
+            self.chosen_date.0 += 1;
+            self.chosen_date.1 = 1;
         }
-        //self.events.next();
     }
 
     pub fn on_right(&mut self) {
-        let selected = self.days_state.selected().unwrap_or(0);
-        self.days_state.select(selected.checked_add(1));
+        if self.chosen_date.1 + 1 <= 31 {
+            self.chosen_date.1 += 1;
+        } else {
+            self.chosen_date.0 += 1;
+            self.chosen_date.1 = 1;
+        }
     }
 
     pub fn on_left(&mut self) {
-        let selected = self.days_state.selected().unwrap_or(0);
-        self.days_state.select(selected.checked_sub(1));
-    }
-    */
-
-    pub fn on_up(&mut self) {
-        self.chosen_date.1.checked_sub(7).unwrap_or_else(|| self.chosen_date.0.checked_sub(1).unwrap_or(0));
-    }
-
-    pub fn on_down(&mut self) {
-        self.chosen_date.1.checked_add(7).unwrap_or_else(|| self.chosen_date.0.checked_add(1).unwrap_or(0));
-    }
-
-    pub fn on_right(&mut self) {
-        self.chosen_date.1 += 1;
-    }
-
-    pub fn on_left(&mut self) {
-        self.chosen_date.1.checked_sub(1).unwrap_or_else(|| self.chosen_date.0.checked_sub(1).unwrap_or(0));
+        if self.chosen_date.1 - 1 > 0 {
+            self.chosen_date.1 -= 1;
+        } else {
+            self.chosen_date.0 -= 1;
+            self.chosen_date.1 = 1;
+        }
     }
 
     pub fn on_key(&mut self, c: char) {

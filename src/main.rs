@@ -14,7 +14,6 @@ use app::run;
 use crate::config::Files;
 use chrono::{prelude::*, Duration};
 use event::{Event, EventTime, Today};
-use crate::widgets::calendar::{List, ListItem};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {

@@ -13,7 +13,7 @@ impl Calendar {
         }
     }
 
-    pub fn from_today(&self, weeks: u16) -> (Vec<Date<Local>>, (usize, usize)) {
+    pub fn from_today(&self, weeks: u16) -> Vec<Date<Local>> {
         let curr_monday = self.date.checked_sub_signed(
             Duration::days(self.date.weekday().num_days_from_monday().into())
             ).unwrap();
@@ -25,17 +25,17 @@ impl Calendar {
 
         let mut days: Vec<Date<Local>> = Vec::new();
 
-        let (mut month, mut day): (usize, usize) = (0, 0);
-
         while before.le(&after) {
-            if before.eq(&self.date) {
-                (month, day) = (before.month() as usize, before.day() as usize);
-            }
             days.push(before);
             before = before.succ();
         }
 
-        (days, (month, day))
+        days
+    }
+
+    pub fn today() -> (u32, u32) {
+        let d = Local::now().date();
+        (d.month(), d.day())
     }
 
     pub fn get_date(&self) -> Date<Local> {
