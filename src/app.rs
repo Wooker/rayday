@@ -7,6 +7,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use rayday::get_days_from_month;
 use std::{
     error::Error,
     io,
@@ -176,13 +177,16 @@ impl<'a> App<'a> {
         if let Some(day) = self.chosen_date.1.checked_sub(7) {
             self.chosen_date.1 = day;
         } else {
+            // TODO add year to calendar state
+            let days_in_prev_month = get_days_from_month(2022, self.chosen_date.0.checked_sub(1).unwrap_or(12));
             self.chosen_date.0 -= 1;
-            self.chosen_date.1 = 1;
+            self.chosen_date.1 = days_in_prev_month as u32;
         }
     }
 
     pub fn on_down(&mut self) {
-        if self.chosen_date.1 + 7 <= 31 {
+        let days_in_curr_month = get_days_from_month(2022, self.chosen_date.0);
+        if self.chosen_date.1 + 7 <= days_in_curr_month as u32 {
             self.chosen_date.1 += 7;
         } else {
             self.chosen_date.0 += 1;
@@ -191,7 +195,8 @@ impl<'a> App<'a> {
     }
 
     pub fn on_right(&mut self) {
-        if self.chosen_date.1 + 1 <= 31 {
+        let days_in_curr_month = get_days_from_month(2022, self.chosen_date.0);
+        if self.chosen_date.1 + 1 <= days_in_curr_month as u32 {
             self.chosen_date.1 += 1;
         } else {
             self.chosen_date.0 += 1;
@@ -203,8 +208,9 @@ impl<'a> App<'a> {
         if self.chosen_date.1 - 1 > 0 {
             self.chosen_date.1 -= 1;
         } else {
+            let days_in_prev_month = get_days_from_month(2022, self.chosen_date.0.checked_sub(1).unwrap_or(12));
             self.chosen_date.0 -= 1;
-            self.chosen_date.1 = 1;
+            self.chosen_date.1 = days_in_prev_month as u32;
         }
     }
 

@@ -1,3 +1,5 @@
+use chrono::NaiveDate;
+
 const REFORM_YEAR: u32 = 1099;
 const MONTHS: usize = 12;
 const WEEKDAYS: u32 = 7;
@@ -21,4 +23,20 @@ fn days_by_year(mut year: u32) -> u32 {
         }
     }
     count
+}
+
+pub fn get_days_from_month(year: i32, month: u32) -> i64 {
+    NaiveDate::from_ymd(
+        match month {
+            12 => year + 1,
+            _ => year,
+        },
+        match month {
+            12 => 1,
+            _ => month + 1,
+        },
+        1,
+    )
+    .signed_duration_since(NaiveDate::from_ymd(year, month, 1))
+    .num_days()
 }

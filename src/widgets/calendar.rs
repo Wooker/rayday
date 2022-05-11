@@ -1,4 +1,5 @@
-use chrono::{Date, Local, Datelike, Weekday};
+use num_traits::cast::FromPrimitive;
+use chrono::{Date, Local, Datelike, Weekday, Month};
 use tui::{
     buffer::Buffer,
     layout::{Corner, Rect},
@@ -75,7 +76,7 @@ impl<'a> CalendarWidget<'a> {
         let mut months: Vec<MonthWidget> = Vec::new();
 
         // i, j - new indicies for (month, day)
-        let (mut curr_month, mut i) = (MonthWidget::new(days.get(0).unwrap().month().to_string()), 0);
+        let (mut curr_month, mut i) = (MonthWidget::new(Month::from_u32(days.get(0).unwrap().month()).unwrap().name()), 0);
         let mut j: usize = 0;
 
         let mut first_weekday = Weekday::Mon;
@@ -90,7 +91,7 @@ impl<'a> CalendarWidget<'a> {
                 months.push(curr_month);
                 i += 1;
                 j = 0;
-                curr_month = MonthWidget::new(curr_day.month().to_string());
+                curr_month = MonthWidget::new(Month::from_u32(curr_day.month()).unwrap().name());
                 first_weekday = curr_day.weekday();
             }
             curr_month.days.push(DayWidget::new(curr_day.day().to_string()));
@@ -167,13 +168,13 @@ impl<'a> StatefulWidget for CalendarWidget<'a> {
             .enumerate()
         {
             let (x, y) = (block_area.left(), block_area.top() + prev_month_height as u16);
+            let middle = (x + block_area.width) / 2;
             let area = Rect {
-                x,
+                x: middle,
                 y,
-                width: block_area.width, // 2 is date width
+                width: block_area.width,
                 height: month.height() as u16,
             };
-            //buf.set_style(area, Style::default().bg(Color::Rgb(10u8 * i as u8, 10u8 * i as u8, 10u8 * i as u8)));
             buf.set_style(area, month.style);
             buf.set_spans(area.x, area.y, month.content.lines.get(0).unwrap(), area.width);
 
@@ -185,13 +186,12 @@ impl<'a> StatefulWidget for CalendarWidget<'a> {
                 let area = Rect {
                     x: last_day_pos.0 + 1,
                     y: last_day_pos.1 + 1,
-                    width: 2, // 2 is date width
+                    width: 2,
                     height: 1,
                 };
                 buf.set_style(area, day.style);
                 buf.set_spans(area.x, area.y, day.content.lines.get(0).unwrap(), area.width);
 
-                //print!("{:?}", state);
                 if (i as u32, j as u32) == self.date {
                     buf.set_style(area, self.highlight_style);
                 }
@@ -205,7 +205,6 @@ impl<'a> StatefulWidget for CalendarWidget<'a> {
                 }
 
             }
-            //println!("{}", prev_month_height);
             prev_month_height += month.height() + 1;
             last_day_pos.1 += 3;
         }
@@ -217,20 +216,4 @@ mod tests {
     use super::*;
     use crate::calendar::Calendar;
 
-    #[test]
-    fn months() {
-        let cal = Calendar::new();
-
-        let mut cal_w = CalendarWidget::new(cal.from_today(5));
-
-        assert_eq!(cal_w.months.len(), 3);
-    }
-
-    #[test]
-    fn month_height() {
-        let cal = Calendar::new();
-
-        let mut cal_w = CalendarWidget::new(cal.from_today(5));
-        assert_eq!(3, cal_w.months.get(0).unwrap().height());
-    }
 }
