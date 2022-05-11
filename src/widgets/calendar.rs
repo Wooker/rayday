@@ -205,7 +205,7 @@ impl<'a> StatefulWidget for CalendarWidget<'a> {
                 }
 
             }
-            prev_month_height += month.height() + 1;
+            prev_month_height += month.height();
             last_day_pos.1 += 3;
         }
     }

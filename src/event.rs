@@ -53,6 +53,10 @@ impl EventTime {
     pub fn end_datetime(&self) -> DateTime<Local> {
         self.end.with_timezone(&Local)
     }
+
+    pub fn to_string(&self) -> String {
+        format!("{}|{}", self.start_datetime(), self.end_datetime())
+    }
 }
 
 impl From<&str> for EventTime {
@@ -65,6 +69,12 @@ impl From<&str> for EventTime {
             start: Local.datetime_from_str(start, PARSE_TIME).unwrap(),
             end: Local.datetime_from_str(end, PARSE_TIME).unwrap(),
         }
+    }
+}
+
+impl Into<String> for EventTime {
+    fn into(self) -> String {
+        self.to_string()
     }
 }
 
@@ -104,6 +114,10 @@ impl Event {
 
     pub fn desc(&self) -> &str {
         self.description.borrow()
+    }
+
+    pub fn to_string(&self) -> String {
+        format!("{}: {}", self.time.to_string(), self.description)
     }
 }
 

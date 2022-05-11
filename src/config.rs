@@ -156,6 +156,18 @@ impl Files {
             .filter(|e| e.time().start_date() == date)
             .collect()
     }
+    pub fn events_list(&self, date: Date<Local>) -> Vec<Event> {
+            self.events
+                .iter()
+                .map(|e| {
+                    Event::new(
+                        EventTime::from(e.get_key()),
+                        e.get_value::<String>().unwrap(),
+                    )
+                })
+                .filter(|e| e.time().start_date() == date)
+                .collect()
+    }
 
     pub fn events_stateful_list(&self, date: Date<Local>) -> StatefulList<Event> {
         // Get EventTime as keys from db

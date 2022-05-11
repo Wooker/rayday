@@ -1,4 +1,4 @@
-use crate::ui;
+use crate::{ui, widgets::event_view::EventState};
 use chrono::prelude::*;
 use crossterm::{
     event::{
@@ -152,6 +152,7 @@ pub struct App<'a> {
     pub events: StatefulList<CalEvent>,
     pub calendar: Calendar,
     pub chosen_date: (u32, u32),
+    pub chosen_event: EventState,
     //pub days: StatefulList<Date<Local>>,
 }
 
@@ -169,6 +170,7 @@ impl<'a> App<'a> {
             events,
             //days: StatefulList::with_items(calendar.from_today(2)), // 2 weeks
             chosen_date: Calendar::today(),
+            chosen_event: EventState::new(None),
             calendar,
         }
     }
