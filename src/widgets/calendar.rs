@@ -65,6 +65,7 @@ impl<'a> MonthWidget<'a> {
 pub struct CalendarWidget<'a> {
     months: Vec<MonthWidget<'a>>,
     date: (u32, u32), // (month, day)
+    today: (u32, u32),
     style: Style,
     block: Option<Block<'a>>,
     highlight_style: Style,
@@ -74,6 +75,8 @@ pub struct CalendarWidget<'a> {
 impl<'a> CalendarWidget<'a> {
     pub fn new(days: Vec<Date<Local>>, (mut month, mut day): (u32, u32)) -> Self {
         let mut months: Vec<MonthWidget> = Vec::new();
+        let now = Local::now().date();
+        let mut today = (0, 0);
 
         // i, j - new indicies for (month, day)
         let (mut curr_month, mut i) = (MonthWidget::new(Month::from_u32(days.get(0).unwrap().month()).unwrap().name()), 0);
@@ -101,11 +104,16 @@ impl<'a> CalendarWidget<'a> {
             if (curr_day.month(), curr_day.day()) == (month, day) {
                 (month, day) = (i, j as u32 - 1);
             }
+            if (curr_day.month(), curr_day.day()) == (now.month(), now.day()) {
+                today = (i, j as u32 - 1);
+            }
         }
+
 
         CalendarWidget {
             months,
             date: (month, day),
+            today,
             style: Style::default(),
             block: None,
             highlight_style: Style::default(),
@@ -194,6 +202,8 @@ impl<'a> StatefulWidget for CalendarWidget<'a> {
 
                 if (i as u32, j as u32) == self.date {
                     buf.set_style(area, self.highlight_style);
+                } else if (i as u32, j as u32) == self.today {
+                    buf.set_style(area, Style::default().fg(Color::Red));
                 }
 
                 let next_pos = area.x + area.width;

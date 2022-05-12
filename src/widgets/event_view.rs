@@ -82,12 +82,12 @@ impl<'a> StatefulWidget for EventView<'a> {
             return;
         }
 
+        let tg = TimeGrid::new(self.enhanced).style(Style::default().fg(Color::Red));
+        tg.render(block_area, buf);
+
         if self.events.is_empty() {
             return;
         }
-
-        let tg = TimeGrid::new(self.enhanced).style(Style::default().fg(Color::Red));
-        tg.render(block_area, buf);
 
         for (i, event) in self
             .events
