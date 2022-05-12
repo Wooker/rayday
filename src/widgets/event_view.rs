@@ -1,13 +1,13 @@
-use std::borrow::Borrow;
-
 use tui::{
     layout::Rect,
     text::Spans,
     buffer::Buffer,
-    widgets::{StatefulWidget, Widget, Block}, text::Text, style::Style
+    widgets::{StatefulWidget, Widget, Block, canvas::{Line, Canvas}, Borders}, text::Text, style::{Style, Color}
 };
 
 use crate::event::Event;
+
+use super::{time_grid::TimeGrid, event_slot::EventSlot};
 
 pub struct EventState {
     selected: Option<usize>,
@@ -26,10 +26,11 @@ pub struct EventView<'a> {
     block: Option<Block<'a>>,
     highlight_style: Style,
     highlight_symbol: Option<&'a str>,
+    enhanced: bool,
 }
 
 impl<'a> EventView<'a> {
-    pub fn new(events: Vec<Event>) -> Self {
+    pub fn new(events: Vec<Event>, enhanced_graphics: bool) -> Self {
         EventView {
             events,
             state: EventState { selected: None },
@@ -37,6 +38,7 @@ impl<'a> EventView<'a> {
             style: Style::default(),
             highlight_symbol: None,
             highlight_style: Style::default(),
+            enhanced: enhanced_graphics,
         }
     }
 
@@ -84,20 +86,22 @@ impl<'a> StatefulWidget for EventView<'a> {
             return;
         }
 
+        let tg = TimeGrid::new(self.enhanced).style(Style::default().fg(Color::Red));
+        tg.render(block_area, buf);
+
         for (i, event) in self
             .events
             .iter()
             .enumerate()
         {
-            let (x, y) = (block_area.left(), block_area.top());
-            let area = Rect {
-                x,
-                y: y + i as u16,
-                width: block_area.width,
-                height: 1,
-            };
-            buf.set_style(area, self.style);
-            buf.set_spans(area.x, area.y,Spans::from(event.to_string()).borrow(), area.width);
+            let slot = EventSlot::new(
+                event.desc().to_string(),
+                40.0, //event.time().start_datetime(),
+                30.0, //event.time().end_datetime(),
+                event.desc(),
+                Color::Yellow
+                );
+            slot.render(block_area, buf);
         }
     }
 }

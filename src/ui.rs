@@ -1,13 +1,13 @@
 use crate::{
     app::App,
-    widgets::{calendar::CalendarWidget, event_view::EventView},
+    widgets::{calendar::CalendarWidget, event_view::EventView, grid::Grid, time_grid::TimeGrid},
 };
 use tui::{
     backend::Backend,
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, Table, Row, Cell, StatefulWidget, ListState},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, Table, Row, Cell, StatefulWidget, ListState, canvas::{Canvas, Map, Line, Rectangle}, Widget},
     buffer::Buffer,
     Frame,
 };
@@ -114,35 +114,11 @@ where
 
     let date = Local.ymd(2022, app.chosen_date.0, app.chosen_date.1);
 
-    {
-        let chunks = Layout::default()
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-            .direction(Direction::Vertical)
-            .split(chunks[1]);
+    let ev = EventView::new(app.files.events_list(date), app.enhanced_graphics)
+        .block(Block::default().borders(Borders::ALL).title("Events"))
+        .highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
-        let ev = EventView::new(app.files.events_list(date))
-            .block(Block::default().borders(Borders::ALL).title("Events"))
-            .highlight_style(Style::default().add_modifier(Modifier::BOLD));
-        f.render_stateful_widget(ev, chunks[0], &mut app.chosen_event);
-
-        let evs = app.files.events_stateful_list(date);
-        let mut events: Vec<ListItem> = evs
-            .items
-            .iter()
-            .map(|itm| {
-                let s = info_style;
-                let content = vec![Spans::from(vec![
-                    Span::styled(format!("{}|{}: ", itm.time().start_datetime(), itm.time().end_datetime()), s),
-                    Span::raw(itm.desc()),
-                ])];
-                ListItem::new(content)
-            })
-            .collect();
-        let events = List::new(events)
-            .block(Block::default().borders(Borders::ALL).title("Events"))
-            .highlight_style(Style::default().add_modifier(Modifier::BOLD));
-        f.render_stateful_widget(events, chunks[1], &mut app.events.state);
-    }
+    f.render_stateful_widget(ev, chunks[1], &mut app.chosen_event);
 }
 
 fn draw_second_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
