@@ -14,7 +14,6 @@ use tui::style::Color;
 
 use crate::{
     event::{Event, EventTime, EventTimeError, Today},
-    app::StatefulList,
 };
 
 use pickledb::{
@@ -167,22 +166,6 @@ impl Files {
                 })
                 .filter(|e| e.time().start_date() == date)
                 .collect()
-    }
-
-    pub fn events_stateful_list(&self, date: Date<Local>) -> StatefulList<Event> {
-        // Get EventTime as keys from db
-        StatefulList::with_items(
-            self.events
-                .iter()
-                .map(|e| {
-                    Event::new(
-                        EventTime::from(e.get_key()),
-                        e.get_value::<String>().unwrap(),
-                    )
-                })
-                .filter(|e| e.time().start_date() == date)
-                .collect()
-        )
     }
 
     pub fn get_todo(&mut self, key: &str, value: &str) -> Result<()> {

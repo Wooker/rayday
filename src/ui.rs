@@ -1,6 +1,6 @@
 use crate::{
-    app::App,
-    widgets::{calendar::CalendarWidget, event_view::EventView, grid::Grid, time_grid::TimeGrid, popup::centered_rect},
+    app::{App, InputMode},
+    widgets::{calendar::CalendarWidget, event_view::EventView, grid::Grid, time_grid::TimeGrid, popup::{centered_rect, PopupAdd}},
 };
 use tui::{
     backend::Backend,
@@ -122,11 +122,33 @@ where
 
     f.render_stateful_widget(ev, chunks[1], &mut app.chosen_event);
 
-    if app.add_event {
-        let block = Block::default().title("Popup").borders(Borders::ALL);
-        let area = centered_rect(60, 20, chunks[1]);
-        f.render_widget(Clear, area); //this clears out the background
-        f.render_widget(block, area);
+    let popup = PopupAdd::new(&app.input, &app.input_mode)
+        .block(Block::default().title("Popup").borders(Borders::ALL));
+
+    match app.input_mode {
+        InputMode::Normal =>
+            // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
+            {}
+
+        InputMode::Adding => {
+            // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
+        }
+    }
+
+    match app.input_mode {
+        InputMode::Adding => {
+            let area = centered_rect(60, 20, chunks[1]);
+            f.set_cursor(
+                // Put cursor past the end of the input text
+                area.x + app.input.len() as u16 + 1,
+                // Move one line down, from the border to the input line
+                area.y + 1,
+            );
+            f.render_widget(Clear, area); //this clears out the background
+            f.render_widget(popup, area);
+            //f.render_widget(popup, area)
+        }
+        _ => {},
     }
 }
 

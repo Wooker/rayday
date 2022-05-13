@@ -3,7 +3,7 @@ use tui::{
     layout::Rect,
     text::{Spans, Span},
     buffer::Buffer,
-    widgets::{StatefulWidget, Widget, Block, canvas::{Line, Canvas, Rectangle, Context}}, text::Text, style::{Style, Color}
+    widgets::{StatefulWidget, Widget, Block, canvas::{Line, Canvas, Rectangle, Context}, Clear}, text::Text, style::{Style, Color}
 };
 
 use crate::event::{EventTime, Event};
@@ -49,6 +49,7 @@ impl<'a> Widget for EventSlot<'a> {
                     Span::raw(self.event.desc()),
                 ]));
             });
+        //&Clear.render(area, buf);
         canvas.render(area, buf);
         //buf.set_style(area, Style::default().bg(Color::Gray));
         //buf.set_string(area.x + 1, area.y + 1, self.desc, Style::default().fg(Color::Red));

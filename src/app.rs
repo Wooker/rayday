@@ -50,98 +50,10 @@ impl<'a> TabsState<'a> {
     }
 }
 
-pub struct StatefulList<T> {
-    pub state: ListState,
-    pub items: Vec<T>,
+pub enum InputMode {
+    Normal,
+    Adding,
 }
-
-impl<T> StatefulList<T> {
-    pub fn with_items(items: Vec<T>) -> StatefulList<T> {
-        StatefulList {
-            state: ListState::default(),
-            items,
-        }
-    }
-
-    pub fn add(&mut self, item: T) {
-        self.items.push(item);
-    }
-
-    pub fn next(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i >= self.items.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
-
-    pub fn previous(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.items.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
-}
-
-pub struct StatefulDayList<T> {
-    pub state: ListState,
-    pub items: Vec<T>,
-}
-
-impl<T> StatefulDayList<T> {
-    pub fn with_items(items: Vec<T>) -> StatefulList<T> {
-        StatefulList {
-            state: ListState::default(),
-            items,
-        }
-    }
-
-    pub fn add(&mut self, item: T) {
-        self.items.push(item);
-    }
-
-    pub fn next(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i >= self.items.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
-
-    pub fn previous(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.items.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
-}
-
 
 pub struct App<'a> {
     pub title: &'a str,
@@ -149,17 +61,17 @@ pub struct App<'a> {
     pub tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
     pub files: Files,
-    pub events: StatefulList<CalEvent>,
     pub calendar: Calendar,
     pub chosen_date: (u32, u32),
     pub chosen_event: EventState,
     pub add_event: bool,
+    pub input: String,
+    pub input_mode: InputMode,
 }
 
 impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
         let files = Files::new().unwrap();
-        let events = files.events_stateful_list(Local::today());
         let calendar = Calendar::new();
         App {
             title,
@@ -167,11 +79,12 @@ impl<'a> App<'a> {
             tabs: TabsState::new(vec!["Calendar", "Todo"]),
             enhanced_graphics,
             files,
-            events,
             chosen_date: Calendar::today(),
             chosen_event: EventState::new(None),
             calendar,
             add_event: false,
+            input: String::new(),
+            input_mode: InputMode::Normal,
         }
     }
 
@@ -234,11 +147,8 @@ impl<'a> App<'a> {
                 self.on_right();
             }
             'a' => {
-                //self.add_event = true;
-                self.on_add_item();
-            }
-            'd' => {
-                self.on_rem_item();
+                self.input_mode = InputMode::Adding;
+                //self.on_add_item();
             }
             _ => {}
         }
@@ -261,38 +171,36 @@ impl<'a> App<'a> {
     pub fn on_add_item(&mut self) {
         match self.tabs.index {
             _ => {
+                let s_e: Vec<&str> = self.input.split('-').collect();
+
+                let s_h_m: Vec<&str> = s_e.get(0).unwrap().split(':').collect();
+                let e_h_m: Vec<&str> = s_e.get(1).unwrap().split(':').collect();
+                dbg!(&s_h_m);
+
+                let (s_h, s_m) = (s_h_m.get(0).unwrap(), s_h_m.get(1).unwrap());
+                let (e_h, e_m) = (e_h_m.get(0).unwrap(), e_h_m.get(1).unwrap());
 
                 let event = CalEvent::new(
-                    CalEventTime::new_md(self.chosen_date, (12, 10), (13, 59)).unwrap(),
+                    CalEventTime::new_md(self.chosen_date, (
+                            s_h.parse::<u32>().unwrap(),
+                            s_m.parse::<u32>().unwrap()
+                        ), (
+                            e_h.parse::<u32>().unwrap(),
+                            e_m.parse::<u32>().unwrap()
+                        )
+                    )
+                    .unwrap(),
                     String::from("Test")
                 );
-                //self.events.add(event.clone());
                 self
                 .files
                 .add_event(event.clone())
                 .unwrap();
+
+                self.input = String::new();
             }
             1 => self.files.add_todo("todo", "TODO").unwrap(),
         }
-    }
-
-    pub fn on_rem_item(&mut self) {
-        match self.tabs.index {
-            0 => {
-                let i = self.events.state.selected().unwrap();
-                let event = self.events.items.iter().nth(i).unwrap();
-                self
-                .files
-                .remove_event(event.time()).unwrap();
-                if i == self.events.items.len() - 1 {
-                    self.events.previous();
-                }
-                self.events.items.remove(i);
-            },
-
-            _ => (),
-            //1 => self.calendar.add_todo("todo", "TODO").unwrap(),
-        };
     }
 }
 
@@ -338,16 +246,38 @@ fn run_app<B: Backend>(
             .unwrap_or_else(|| Duration::from_secs(0));
         if crossterm::event::poll(timeout)? {
             if let Event::Key(key) = event::read()? {
-                match key.code {
-                    KeyCode::Char(c) if key.modifiers == KeyModifiers::CONTROL => {
-                        app.on_ctrl_key(c)
-                    }
-                    KeyCode::Char(c) => app.on_key(c),
-                    KeyCode::Left => app.on_left(),
-                    KeyCode::Up => app.on_up(),
-                    KeyCode::Right => app.on_right(),
-                    KeyCode::Down => app.on_down(),
-                    _ => {}
+                match app.input_mode {
+                    InputMode::Normal => {
+                        match key.code {
+                            KeyCode::Char(c) if key.modifiers == KeyModifiers::CONTROL => {
+                                app.on_ctrl_key(c)
+                            }
+                            KeyCode::Char(c) => app.on_key(c),
+                            KeyCode::Left => app.on_left(),
+                            KeyCode::Up => app.on_up(),
+                            KeyCode::Right => app.on_right(),
+                            KeyCode::Down => app.on_down(),
+                            _ => {}
+                        }
+                    },
+                    InputMode::Adding => match key.code {
+                        KeyCode::Enter => {
+                            //app.messages.push(app.input.drain(..).collect());
+                            app.on_add_item();
+                            app.input_mode = InputMode::Normal;
+
+                        }
+                        KeyCode::Char(c) => {
+                            app.input.push(c);
+                        }
+                        KeyCode::Backspace => {
+                            app.input.pop();
+                        }
+                        KeyCode::Esc => {
+                            app.input_mode = InputMode::Normal;
+                        }
+                        _ => {}
+                    },
                 }
             }
         }
