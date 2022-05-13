@@ -95,11 +95,8 @@ impl<'a> StatefulWidget for EventView<'a> {
             .enumerate()
         {
             let slot = EventSlot::new(
-                event.desc().to_string(),
-                40.0, //event.time().start_datetime(),
-                30.0, //event.time().end_datetime(),
-                event.desc(),
-                Color::Yellow
+                event,
+                Color::Yellow,
                 );
             slot.render(block_area, buf);
         }

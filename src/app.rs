@@ -153,7 +153,7 @@ pub struct App<'a> {
     pub calendar: Calendar,
     pub chosen_date: (u32, u32),
     pub chosen_event: EventState,
-    //pub days: StatefulList<Date<Local>>,
+    pub add_event: bool,
 }
 
 impl<'a> App<'a> {
@@ -168,10 +168,10 @@ impl<'a> App<'a> {
             enhanced_graphics,
             files,
             events,
-            //days: StatefulList::with_items(calendar.from_today(2)), // 2 weeks
             chosen_date: Calendar::today(),
             chosen_event: EventState::new(None),
             calendar,
+            add_event: false,
         }
     }
 
@@ -234,6 +234,7 @@ impl<'a> App<'a> {
                 self.on_right();
             }
             'a' => {
+                //self.add_event = true;
                 self.on_add_item();
             }
             'd' => {
@@ -260,11 +261,12 @@ impl<'a> App<'a> {
     pub fn on_add_item(&mut self) {
         match self.tabs.index {
             _ => {
+
                 let event = CalEvent::new(
-                    CalEventTime::now(chrono::Duration::minutes(30)),
+                    CalEventTime::new_md(self.chosen_date, (12, 10), (13, 59)).unwrap(),
                     String::from("Test")
                 );
-                self.events.add(event.clone());
+                //self.events.add(event.clone());
                 self
                 .files
                 .add_event(event.clone())

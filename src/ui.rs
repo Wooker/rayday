@@ -1,13 +1,13 @@
 use crate::{
     app::App,
-    widgets::{calendar::CalendarWidget, event_view::EventView, grid::Grid, time_grid::TimeGrid},
+    widgets::{calendar::CalendarWidget, event_view::EventView, grid::Grid, time_grid::TimeGrid, popup::centered_rect},
 };
 use tui::{
     backend::Backend,
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, Table, Row, Cell, StatefulWidget, ListState, canvas::{Canvas, Map, Line, Rectangle}, Widget},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, Table, Row, Cell, StatefulWidget, ListState, canvas::{Canvas, Map, Line, Rectangle}, Widget, Clear},
     buffer::Buffer,
     Frame,
 };
@@ -100,6 +100,8 @@ fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
 where
     B: Backend,
 {
+    let size = f.size();
+
     let chunks = Layout::default()
         .constraints([Constraint::Length(24), Constraint::Min(10)].as_ref())
         .direction(Direction::Horizontal)
@@ -119,6 +121,13 @@ where
         .highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
     f.render_stateful_widget(ev, chunks[1], &mut app.chosen_event);
+
+    if app.add_event {
+        let block = Block::default().title("Popup").borders(Borders::ALL);
+        let area = centered_rect(60, 20, chunks[1]);
+        f.render_widget(Clear, area); //this clears out the background
+        f.render_widget(block, area);
+    }
 }
 
 fn draw_second_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)

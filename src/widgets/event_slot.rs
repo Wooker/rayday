@@ -1,50 +1,52 @@
+use chrono::Timelike;
 use tui::{
     layout::Rect,
     text::{Spans, Span},
     buffer::Buffer,
-    widgets::{StatefulWidget, Widget, Block, canvas::{Line, Canvas, Rectangle}}, text::Text, style::{Style, Color}
+    widgets::{StatefulWidget, Widget, Block, canvas::{Line, Canvas, Rectangle, Context}}, text::Text, style::{Style, Color}
 };
 
+use crate::event::{EventTime, Event};
+
 pub struct EventSlot<'a> {
-    start: f64,
-    duration: f64,
-    color: Color,
-    content: Text<'a>,
-    desc: String,
+    event: &'a Event,
+    border_color: Color,
+    style: Style,
 }
 
 impl<'a> EventSlot<'a> {
-    pub fn new<T>(desc: String, start: f64, duration: f64, content: T, color: Color) -> Self
-    where
-        T: Into<Text<'a>>,
-    {
+    pub fn new(event: &'a Event, border_color: Color) -> Self {
         EventSlot {
-            desc,
-            start,
-            duration,
-            color,
-            content: content.into(),
+            event,
+            border_color,
+            style: Style::default(),
         }
     }
 }
 
 impl<'a> Widget for EventSlot<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
+        let start_datetime = self.event.time().start_datetime();
+        let end_datetime = self.event.time().end_datetime();
+
+        let start: f64 = (start_datetime.hour() * 10) as f64 + start_datetime.minute() as f64 / 6f64;
+        let end: f64 = (end_datetime.hour() * 10) as f64 + end_datetime.minute() as f64 / 6f64;
+
         let canvas = Canvas::default()
             .x_bounds([0.0, area.width.into()])
             .y_bounds([-240.0, 0.0])
             .paint(|ctx| {
-                let desc = self.desc.clone();
+                let duration = end - start;
                 ctx.draw(&Rectangle {
                     x: 1.0,
-                    y: -self.start,
+                    y: -start,
                     width: (area.width - 7) as f64,
-                    height: self.duration,
-                    color: self.color,
+                    height: -duration,
+                    color: self.border_color,
                 });
                 ctx.layer();
-                ctx.print(area.width as f64 / 2.0, -self.start + self.duration / 2.0, Spans::from(vec![
-                    Span::raw(desc),
+                ctx.print(area.width as f64 / 2.0, -start - duration / 2.0, Spans::from(vec![
+                    Span::raw(self.event.desc()),
                 ]));
             });
         canvas.render(area, buf);

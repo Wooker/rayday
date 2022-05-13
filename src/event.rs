@@ -38,6 +38,19 @@ impl EventTime {
         }
     }
 
+    pub fn new_md(date: (u32, u32), start: (u32, u32), end: (u32, u32)) -> Result<EventTime, EventTimeError> {
+        let d = Local.ymd(2022, date.0, date.1);
+
+        let start = d.and_hms(start.0, start.1, 0);
+        let end = d.and_hms(end.0, end.1, 0);
+
+        match start.cmp(&end) {
+            cmp::Ordering::Greater => Err(EventTimeError::EndBeforeStart),
+            cmp::Ordering::Less => Ok(EventTime { start, end }),
+            _ => Err(EventTimeError::Unknown),
+        }
+    }
+
     pub fn start_date(&self) -> Date<Local> {
         self.start.date()
     }
@@ -112,8 +125,8 @@ impl Event {
         self.time
     }
 
-    pub fn desc(&self) -> &str {
-        self.description.borrow()
+    pub fn desc(&self) -> String {
+        self.description.to_string()
     }
 
     pub fn to_string(&self) -> String {
