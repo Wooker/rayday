@@ -109,12 +109,12 @@ where
 
     let info_style = Style::default().fg(Color::Blue);
 
-    let mut calendar = CalendarWidget::new(app.calendar.from_today(10), app.chosen_date)
+    let mut calendar = CalendarWidget::new(app.calendar.from_today(19), app.chosen_date, app.chosen_date)
         .block(Block::default().borders(Borders::ALL).title("Calendar Widget"))
         .highlight_style(Style::default().bg(app.files.config.color).add_modifier(Modifier::BOLD));
     f.render_stateful_widget(calendar, chunks[0], &mut app.chosen_date);
 
-    let date = Local.ymd(2022, app.chosen_date.0, app.chosen_date.1);
+    let date = Local.ymd(2022, app.chosen_date.month(), app.chosen_date.day());
 
     let ev = EventView::new(app.files.events_list(date), app.enhanced_graphics)
         .block(Block::default().borders(Borders::ALL).title("Events"))
@@ -123,7 +123,7 @@ where
     f.render_stateful_widget(ev, chunks[1], &mut app.chosen_event);
 
     let popup = PopupAdd::new(&app.input, &app.input_mode)
-        .block(Block::default().title("Popup").borders(Borders::ALL));
+        .block(Block::default().title("Popup").borders(Borders::ALL).border_type(tui::widgets::BorderType::Thick));
 
     match app.input_mode {
         InputMode::Normal =>

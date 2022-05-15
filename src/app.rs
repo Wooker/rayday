@@ -62,7 +62,7 @@ pub struct App<'a> {
     pub enhanced_graphics: bool,
     pub files: Files,
     pub calendar: Calendar,
-    pub chosen_date: (u32, u32),
+    pub chosen_date: Date<Local>,
     pub chosen_event: EventState,
     pub add_event: bool,
     pub input: String,
@@ -79,7 +79,7 @@ impl<'a> App<'a> {
             tabs: TabsState::new(vec!["Calendar", "Todo"]),
             enhanced_graphics,
             files,
-            chosen_date: Calendar::today(),
+            chosen_date: Local::now().date(),
             chosen_event: EventState::new(None),
             calendar,
             add_event: false,
@@ -89,44 +89,19 @@ impl<'a> App<'a> {
     }
 
     pub fn on_up(&mut self) {
-        if let Some(day) = self.chosen_date.1.checked_sub(7) {
-            self.chosen_date.1 = day;
-        } else {
-            // TODO add year to calendar state
-            let days_in_prev_month = get_days_from_month(2022, self.chosen_date.0.checked_sub(1).unwrap_or(12));
-            self.chosen_date.0 -= 1;
-            self.chosen_date.1 = days_in_prev_month as u32;
-        }
+        self.chosen_date = self.chosen_date.checked_sub_signed(ChronoDuration::weeks(1)).unwrap();
     }
 
     pub fn on_down(&mut self) {
-        let days_in_curr_month = get_days_from_month(2022, self.chosen_date.0);
-        if self.chosen_date.1 + 7 <= days_in_curr_month as u32 {
-            self.chosen_date.1 += 7;
-        } else {
-            self.chosen_date.0 += 1;
-            self.chosen_date.1 = 1;
-        }
+        self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::weeks(1)).unwrap();
     }
 
     pub fn on_right(&mut self) {
-        let days_in_curr_month = get_days_from_month(2022, self.chosen_date.0);
-        if self.chosen_date.1 + 1 <= days_in_curr_month as u32 {
-            self.chosen_date.1 += 1;
-        } else {
-            self.chosen_date.0 += 1;
-            self.chosen_date.1 = 1;
-        }
+        self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::days(1)).unwrap();
     }
 
     pub fn on_left(&mut self) {
-        if self.chosen_date.1 - 1 > 0 {
-            self.chosen_date.1 -= 1;
-        } else {
-            let days_in_prev_month = get_days_from_month(2022, self.chosen_date.0.checked_sub(1).unwrap_or(12));
-            self.chosen_date.0 -= 1;
-            self.chosen_date.1 = days_in_prev_month as u32;
-        }
+        self.chosen_date = self.chosen_date.checked_sub_signed(ChronoDuration::days(1)).unwrap();
     }
 
     pub fn on_key(&mut self, c: char) {
@@ -175,11 +150,11 @@ impl<'a> App<'a> {
 
                 let s_h_m: Vec<&str> = s_e.get(0).unwrap().split(':').collect();
                 let e_h_m: Vec<&str> = s_e.get(1).unwrap().split(':').collect();
-                dbg!(&s_h_m);
 
                 let (s_h, s_m) = (s_h_m.get(0).unwrap(), s_h_m.get(1).unwrap());
                 let (e_h, e_m) = (e_h_m.get(0).unwrap(), e_h_m.get(1).unwrap());
 
+                /*
                 let event = CalEvent::new(
                     CalEventTime::new_md(self.chosen_date, (
                             s_h.parse::<u32>().unwrap(),
@@ -196,6 +171,7 @@ impl<'a> App<'a> {
                 .files
                 .add_event(event.clone())
                 .unwrap();
+                    */
 
                 self.input = String::new();
             }

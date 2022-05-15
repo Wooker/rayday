@@ -32,6 +32,13 @@ impl<'a> Widget for EventSlot<'a> {
         let start: f64 = (start_datetime.hour() * 10) as f64 + start_datetime.minute() as f64 / 6f64;
         let end: f64 = (end_datetime.hour() * 10) as f64 + end_datetime.minute() as f64 / 6f64;
 
+        let duration = end - start;
+        let r = Rect {
+            x: area.x + 1,
+            y: area.y + 1 + (start / 240f64) as u16,
+            width: area.width - 7,
+            height: (5000f64 / 240f64) as u16
+        };
         let canvas = Canvas::default()
             .x_bounds([0.0, area.width.into()])
             .y_bounds([-240.0, 0.0])
@@ -49,7 +56,7 @@ impl<'a> Widget for EventSlot<'a> {
                     Span::raw(self.event.desc()),
                 ]));
             });
-        //&Clear.render(area, buf);
+        //&Clear.render(r, buf);
         canvas.render(area, buf);
         //buf.set_style(area, Style::default().bg(Color::Gray));
         //buf.set_string(area.x + 1, area.y + 1, self.desc, Style::default().fg(Color::Red));
