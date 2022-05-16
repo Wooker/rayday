@@ -14,6 +14,7 @@ use tui::{
 
 use pickledb::PickleDbIteratorItem;
 use chrono::prelude::*;
+use num_traits::FromPrimitive;
 
 use crate::event::Event;
 
@@ -116,9 +117,14 @@ where
     let mut calendar = CalendarWidget::new(
         app.first_date.unwrap_or(app.calendar.get_date()), //app.calendar.from_today(chunks[0].height / 4),
         chunks[0].height,
-        app.chosen_date
+        app.chosen_date,
+        &app.input_mode
         )
         .block(Block::default().borders(Borders::ALL).title("Calendar Widget"))
+        .style(match app.input_mode {
+            InputMode::Normal => Style::default().fg(Color::Yellow),
+            _ => Style::default()
+        })
         .highlight_style(Style::default().bg(app.files.config.color).add_modifier(Modifier::BOLD));
     if app.last_date.is_none() {
         app.last_date = Some(calendar.get_last_date());
@@ -126,24 +132,24 @@ where
     f.render_stateful_widget(calendar, chunks[0], &mut app.chosen_date);
 
     let date = Local.ymd(app.chosen_date.year(), app.chosen_date.month(), app.chosen_date.day());
-    let ev = EventView::new(app.files.events_list(date), app.enhanced_graphics)
-        .block(Block::default().borders(Borders::ALL).title("Events"))
+    let ev = EventView::new(
+        app.files.events_list(date),
+        &app.input_mode,
+        app.enhanced_graphics
+        )
+        .block(Block::default().borders(Borders::ALL).title(format!(
+            "{} {} {}", date.day(), Month::from_u32(date.month()).unwrap().name(), date.year()
+        )))
+        .style(match app.input_mode {
+            InputMode::Selecting => Style::default().fg(Color::Yellow),
+            _ => Style::default()
+        })
         .highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
     f.render_stateful_widget(ev, chunks[1], &mut app.chosen_event);
 
     let popup = PopupAdd::new(&app.input, &app.input_mode)
         .block(Block::default().title("Popup").borders(Borders::ALL).border_type(tui::widgets::BorderType::Thick));
-
-    match app.input_mode {
-        InputMode::Normal =>
-            // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
-            {}
-
-        InputMode::Adding => {
-            // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
-        }
-    }
 
     match app.input_mode {
         InputMode::Adding => {

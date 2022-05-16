@@ -38,11 +38,9 @@ impl EventTime {
         }
     }
 
-    pub fn new_md(date: (u32, u32), start: (u32, u32), end: (u32, u32)) -> Result<EventTime, EventTimeError> {
-        let d = Local.ymd(2022, date.0, date.1);
-
-        let start = d.and_hms(start.0, start.1, 0);
-        let end = d.and_hms(end.0, end.1, 0);
+    pub fn new_md(date: Date<Local>, start: (u32, u32), end: (u32, u32)) -> Result<EventTime, EventTimeError> {
+        let start = date.and_hms(start.0, start.1, 0);
+        let end = date.and_hms(end.0, end.1, 0);
 
         match start.cmp(&end) {
             cmp::Ordering::Greater => Err(EventTimeError::EndBeforeStart),

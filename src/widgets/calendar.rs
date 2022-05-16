@@ -9,6 +9,8 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
+use crate::app::InputMode;
+
 const DAY_WIDTH: u8 = 2;
 
 #[derive(Debug, Clone)]
@@ -25,6 +27,11 @@ impl<'a> DayWidget<'a> {
             style: Style::default(),
             date,
         }
+    }
+
+    fn style(mut self, style: Style) -> Self {
+        self.style = style;
+        self
     }
 }
 
@@ -71,13 +78,13 @@ pub struct CalendarWidget<'a> {
 }
 
 impl<'a> CalendarWidget<'a> {
-    pub fn new(first_date: Date<Local>, height: u16, selected: Date<Local>) -> Self {
+    pub fn new(first_date: Date<Local>, height: u16, selected: Date<Local>, input_mode: &InputMode) -> Self {
         let mut months: Vec<MonthWidget> = Vec::new();
 
         let mut curr_date = first_date;
 
         // i, j - new indicies for (month, day)
-        let (mut curr_month, mut i) = (MonthWidget::new(curr_date.month()), 0);
+        let mut curr_month = MonthWidget::new(curr_date.month()).style(Style::default().fg(Color::White));
 
         let mut h = 0;
         while h < height - 2 {
@@ -88,7 +95,7 @@ impl<'a> CalendarWidget<'a> {
                     curr_month.height += 1;
                 }
                 months.push(curr_month);
-                curr_month = MonthWidget::new(curr_date.month());
+                curr_month = MonthWidget::new(curr_date.month()).style(Style::default().fg(Color::LightCyan));
                 h += 2;
             }
 
@@ -97,7 +104,7 @@ impl<'a> CalendarWidget<'a> {
                 curr_month.height += 1;
                 h += 1;
             }
-            curr_month.days.push(DayWidget::new(curr_date));
+            curr_month.days.push(DayWidget::new(curr_date).style(Style::default().fg(Color::White)));
 
             curr_date = curr_date.succ();
         }

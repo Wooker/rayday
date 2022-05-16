@@ -5,7 +5,7 @@ use tui::{
     widgets::{StatefulWidget, Widget, Block, canvas::{Line, Canvas}, Borders}, text::Text, style::{Style, Color}
 };
 
-use crate::event::Event;
+use crate::{event::Event, app::InputMode};
 
 use super::{time_grid::TimeGrid, event_slot::EventSlot};
 
@@ -21,7 +21,6 @@ impl EventState {
 
 pub struct EventView<'a> {
     events: Vec<Event>,
-    state: EventState,
     style: Style,
     block: Option<Block<'a>>,
     highlight_style: Style,
@@ -30,10 +29,9 @@ pub struct EventView<'a> {
 }
 
 impl<'a> EventView<'a> {
-    pub fn new(events: Vec<Event>, enhanced_graphics: bool) -> Self {
+    pub fn new(events: Vec<Event>, input_mode: &InputMode, enhanced_graphics: bool) -> Self {
         EventView {
             events,
-            state: EventState { selected: None },
             block: None,
             style: Style::default(),
             highlight_symbol: None,

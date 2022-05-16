@@ -62,8 +62,8 @@ impl<'a> Widget for PopupAdd<'a> {
 
         let input = Paragraph::new(self.input.as_ref())
             .style(match self.input_mode {
-                InputMode::Normal => Style::default(),
                 InputMode::Adding => Style::default().fg(Color::Yellow),
+                _ => Style::default(),
             })
             .block(Block::default().borders(Borders::ALL).title("Add Event"));
         input.render(area, buf);

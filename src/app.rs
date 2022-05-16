@@ -53,6 +53,7 @@ impl<'a> TabsState<'a> {
 pub enum InputMode {
     Normal,
     Adding,
+    Selecting,
 }
 
 pub struct App<'a> {
@@ -166,6 +167,17 @@ impl<'a> App<'a> {
     pub fn on_tick(&mut self) {
     }
 
+    pub fn event_on_key(&mut self, c: char) {
+        match c {
+            'j' => {
+
+            }
+            'k' => {
+            }
+            _ => {}
+        }
+    }
+
     pub fn on_add_item(&mut self) {
         match self.tabs.index {
             _ => {
@@ -177,7 +189,6 @@ impl<'a> App<'a> {
                 let (s_h, s_m) = (s_h_m.get(0).unwrap(), s_h_m.get(1).unwrap());
                 let (e_h, e_m) = (e_h_m.get(0).unwrap(), e_h_m.get(1).unwrap());
 
-                /*
                 let event = CalEvent::new(
                     CalEventTime::new_md(self.chosen_date, (
                             s_h.parse::<u32>().unwrap(),
@@ -194,7 +205,6 @@ impl<'a> App<'a> {
                 .files
                 .add_event(event.clone())
                 .unwrap();
-                    */
 
                 self.input = String::new();
             }
@@ -256,6 +266,7 @@ fn run_app<B: Backend>(
                             KeyCode::Up => app.on_up(),
                             KeyCode::Right => app.on_right(),
                             KeyCode::Down => app.on_down(),
+                            KeyCode::Enter => app.input_mode = InputMode::Selecting,
                             _ => {}
                         }
                     },
@@ -277,6 +288,11 @@ fn run_app<B: Backend>(
                         }
                         _ => {}
                     },
+                    InputMode::Selecting => match key.code {
+                        KeyCode::Char(c) => app.event_on_key(c),
+                        KeyCode::Esc => app.input_mode = InputMode::Normal,
+                        _ => {}
+                    }
                 }
             }
         }
