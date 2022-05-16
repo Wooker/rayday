@@ -30,20 +30,17 @@ impl<'a> DayWidget<'a> {
 
 #[derive(Debug)]
 pub struct MonthWidget<'a> {
-    content: Text<'a>,
+    name: &'a str,
     style: Style,
     days: Vec<DayWidget<'a>>,
     height: usize,
 }
 
 impl<'a> MonthWidget<'a> {
-    fn new<T>(content: T) -> Self
-    where
-        T: Into<Text<'a>>,
-    {
+    fn new(month_num: u32) -> Self {
         MonthWidget {
             days: Vec::new(),
-            content: content.into(),
+            name: Month::from_u32(month_num).unwrap().name(),
             style: Style::default(),
             height: 1,
         }
@@ -59,7 +56,6 @@ impl<'a> MonthWidget<'a> {
     }
 }
 
-// TODO add convenient state struct
 #[derive(Debug)]
 pub struct CalendarWidget<'a> {
     months: Vec<MonthWidget<'a>>,
@@ -69,35 +65,45 @@ pub struct CalendarWidget<'a> {
     block: Option<Block<'a>>,
     highlight_style: Style,
     highlight_symbol: Option<&'a str>,
+
+    first_date: Date<Local>,
+    last_date: Date<Local>,
 }
 
 impl<'a> CalendarWidget<'a> {
-    pub fn new(days: Vec<Date<Local>>, selected: Date<Local>, start_date: Date<Local>) -> Self {
+    pub fn new(first_date: Date<Local>, height: u16, selected: Date<Local>) -> Self {
         let mut months: Vec<MonthWidget> = Vec::new();
 
-        // i, j - new indicies for (month, day)
-        let (mut curr_month, mut i) = (MonthWidget::new(Month::from_u32(days.get(0).unwrap().month()).unwrap().name()), 0);
-        let mut j: usize = 0;
+        let mut curr_date = first_date;
 
-        for (k, curr_day) in days.iter().enumerate() {
+        // i, j - new indicies for (month, day)
+        let (mut curr_month, mut i) = (MonthWidget::new(curr_date.month()), 0);
+
+        let mut h = 0;
+        while h < height - 2 {
             // When new month starts store the month in `months` vec and clear `month`
-            if (curr_day.day() == 1 && !curr_month.days.is_empty() || k == days.len() - 1) {
+            if curr_date.day() == 1 && !curr_month.days.is_empty() {
                 //let mut height = curr_month.days.len() / 7 + 1; // days + slot for month name
-                if curr_day.weekday() != Weekday::Mon {
+                if curr_date.weekday() != Weekday::Mon {
                     curr_month.height += 1;
                 }
                 months.push(curr_month);
-                i += 1;
-                j = 0;
-                curr_month = MonthWidget::new(Month::from_u32(curr_day.month()).unwrap().name());
+                curr_month = MonthWidget::new(curr_date.month());
+                h += 2;
             }
 
             // Add day and update index j
-            if curr_day.weekday() == Weekday::Sun {
+            if curr_date.weekday() == Weekday::Sun {
                 curr_month.height += 1;
+                h += 1;
             }
-            curr_month.days.push(DayWidget::new(*curr_day));
-            j += 1;
+            curr_month.days.push(DayWidget::new(curr_date));
+
+            curr_date = curr_date.succ();
+        }
+
+        if curr_month.days.len() > 0 {
+            months.push(curr_month);
         }
 
         let today = Local::now().date();
@@ -110,11 +116,17 @@ impl<'a> CalendarWidget<'a> {
             block: None,
             highlight_style: Style::default(),
             highlight_symbol: None,
+            first_date,
+            last_date: curr_date.pred(),
         }
     }
 
     pub fn get_date(&self) -> Date<Local> {
         self.selected
+    }
+
+    pub fn get_last_date(&self) -> Date<Local> {
+        self.last_date
     }
 
     pub fn block(mut self, block: Block<'a>) -> CalendarWidget<'a> {
@@ -177,9 +189,14 @@ impl<'a> StatefulWidget for CalendarWidget<'a> {
             };
             buf.set_style(area, month.style);
             //buf.set_style(area, Style::default().bg(Color::Rgb(x as u8 * 30, 4 * y as u8, 10 * i as u8)));
-            buf.set_spans(middle, area.y,
-                          month.content.lines.get(0).unwrap(),
-                          area.width);
+
+
+            buf.set_spans(middle - month.name.len() as u16 / 2, area.y,
+                &Spans::from(vec![
+                    Span::raw(month.name)
+                ]),
+                area.width
+            );
 
             let mut last_day_y = 1;
             for (j, day) in month

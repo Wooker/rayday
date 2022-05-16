@@ -13,6 +13,14 @@ impl Calendar {
         }
     }
 
+    pub fn date_from_today(&self, weeks: u16) -> Date<Local> {
+        let curr_monday = self.date.checked_sub_signed(
+            Duration::days(self.date.weekday().num_days_from_monday().into())
+            ).unwrap();
+
+        curr_monday.checked_sub_signed(Duration::weeks(weeks as i64)).unwrap()
+    }
+
     pub fn from_today(&self, weeks: u16) -> Vec<Date<Local>> {
         let curr_monday = self.date.checked_sub_signed(
             Duration::days(self.date.weekday().num_days_from_monday().into())
@@ -20,6 +28,7 @@ impl Calendar {
         let curr_sunday = self.date.checked_add_signed(
             Duration::days(6i64 - self.date.weekday().num_days_from_monday() as i64)
             ).unwrap();
+
         let mut before = curr_monday.checked_sub_signed(Duration::weeks(weeks as i64)).unwrap();
         let after = curr_sunday.checked_add_signed(Duration::weeks(weeks as i64)).unwrap();
 

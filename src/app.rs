@@ -62,46 +62,69 @@ pub struct App<'a> {
     pub enhanced_graphics: bool,
     pub files: Files,
     pub calendar: Calendar,
+    pub starting_date: Date<Local>,
     pub chosen_date: Date<Local>,
     pub chosen_event: EventState,
     pub add_event: bool,
     pub input: String,
     pub input_mode: InputMode,
+    pub first_date: Option<Date<Local>>,
+    pub last_date: Option<Date<Local>>,
 }
 
 impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
         let files = Files::new().unwrap();
         let calendar = Calendar::new();
+        let now = Local::now().date();
         App {
             title,
             should_quit: false,
             tabs: TabsState::new(vec!["Calendar", "Todo"]),
             enhanced_graphics,
             files,
-            chosen_date: Local::now().date(),
+            starting_date: now,
+            chosen_date: now,
             chosen_event: EventState::new(None),
             calendar,
             add_event: false,
             input: String::new(),
             input_mode: InputMode::Normal,
+            first_date: None,
+            last_date: None,
         }
     }
 
     pub fn on_up(&mut self) {
         self.chosen_date = self.chosen_date.checked_sub_signed(ChronoDuration::weeks(1)).unwrap();
+        if self.chosen_date.lt(&self.first_date.unwrap()) {
+            self.first_date = self.first_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
+            self.last_date = self.last_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
+        }
     }
 
     pub fn on_down(&mut self) {
         self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::weeks(1)).unwrap();
+        if self.chosen_date.ge(&self.last_date.unwrap()) {
+            self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
+            self.last_date = self.last_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
+        }
     }
 
     pub fn on_right(&mut self) {
         self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::days(1)).unwrap();
+        if self.chosen_date.ge(&self.last_date.unwrap()) {
+            self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
+            self.last_date = self.last_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
+        }
     }
 
     pub fn on_left(&mut self) {
         self.chosen_date = self.chosen_date.checked_sub_signed(ChronoDuration::days(1)).unwrap();
+        if self.chosen_date.lt(&self.first_date.unwrap()) {
+            self.first_date = self.first_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
+            self.last_date = self.last_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
+        }
     }
 
     pub fn on_key(&mut self, c: char) {

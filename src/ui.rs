@@ -109,13 +109,23 @@ where
 
     let info_style = Style::default().fg(Color::Blue);
 
-    let mut calendar = CalendarWidget::new(app.calendar.from_today(19), app.chosen_date, app.chosen_date)
+    if app.first_date.is_none() {
+        app.first_date = Some(app.calendar.date_from_today(chunks[0].height / 4));
+    }
+
+    let mut calendar = CalendarWidget::new(
+        app.first_date.unwrap_or(app.calendar.get_date()), //app.calendar.from_today(chunks[0].height / 4),
+        chunks[0].height,
+        app.chosen_date
+        )
         .block(Block::default().borders(Borders::ALL).title("Calendar Widget"))
         .highlight_style(Style::default().bg(app.files.config.color).add_modifier(Modifier::BOLD));
+    if app.last_date.is_none() {
+        app.last_date = Some(calendar.get_last_date());
+    }
     f.render_stateful_widget(calendar, chunks[0], &mut app.chosen_date);
 
-    let date = Local.ymd(2022, app.chosen_date.month(), app.chosen_date.day());
-
+    let date = Local.ymd(app.chosen_date.year(), app.chosen_date.month(), app.chosen_date.day());
     let ev = EventView::new(app.files.events_list(date), app.enhanced_graphics)
         .block(Block::default().borders(Borders::ALL).title("Events"))
         .highlight_style(Style::default().add_modifier(Modifier::BOLD));
