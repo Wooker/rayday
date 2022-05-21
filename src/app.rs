@@ -52,7 +52,8 @@ impl<'a> TabsState<'a> {
 
 pub enum InputMode {
     Normal,
-    Adding,
+    AddingTime,
+    AddingDescription,
     Selecting,
 }
 
@@ -67,7 +68,9 @@ pub struct App<'a> {
     pub chosen_date: Date<Local>,
     pub chosen_event: EventState,
     pub add_event: bool,
-    pub input: String,
+    pub input_time: String,
+    pub input_description: String,
+    pub hint_text: String,
     pub input_mode: InputMode,
     pub first_date: Option<Date<Local>>,
     pub last_date: Option<Date<Local>>,
@@ -89,7 +92,9 @@ impl<'a> App<'a> {
             chosen_event: EventState::new(None),
             calendar,
             add_event: false,
-            input: String::new(),
+            input_time: String::new(),
+            input_description: String::new(),
+            hint_text: String::new(),
             input_mode: InputMode::Normal,
             first_date: None,
             last_date: None,
@@ -104,22 +109,6 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn on_down(&mut self) {
-        self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::weeks(1)).unwrap();
-        if self.chosen_date.ge(&self.last_date.unwrap()) {
-            self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
-            self.last_date = self.last_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
-        }
-    }
-
-    pub fn on_right(&mut self) {
-        self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::days(1)).unwrap();
-        if self.chosen_date.ge(&self.last_date.unwrap()) {
-            self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
-            self.last_date = self.last_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
-        }
-    }
-
     pub fn on_left(&mut self) {
         self.chosen_date = self.chosen_date.checked_sub_signed(ChronoDuration::days(1)).unwrap();
         if self.chosen_date.lt(&self.first_date.unwrap()) {
@@ -128,10 +117,28 @@ impl<'a> App<'a> {
         }
     }
 
+    pub fn on_down(&mut self) {
+        self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::weeks(1)).unwrap();
+        if self.chosen_date.gt(&self.last_date.unwrap()) {
+            self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
+            self.last_date = self.last_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
+        }
+    }
+
+    pub fn on_right(&mut self) {
+        self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::days(1)).unwrap();
+        if self.chosen_date.gt(&self.last_date.unwrap()) {
+            self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
+            self.last_date = self.last_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
+        }
+    }
+
     pub fn on_key(&mut self, c: char) {
         match c {
             'q' => {
                 self.should_quit = true;
+                //dbg!(&self.last_date);
+                //std::thread::sleep(Duration::from_secs(5));
             }
             'j' => {
                 self.on_down();
@@ -146,7 +153,7 @@ impl<'a> App<'a> {
                 self.on_right();
             }
             'a' => {
-                self.input_mode = InputMode::Adding;
+                self.input_mode = InputMode::AddingTime;
                 //self.on_add_item();
             }
             _ => {}
@@ -181,7 +188,7 @@ impl<'a> App<'a> {
     pub fn on_add_item(&mut self) {
         match self.tabs.index {
             _ => {
-                let s_e: Vec<&str> = self.input.split('-').collect();
+                let s_e: Vec<&str> = self.input_time.split('-').collect();
 
                 let s_h_m: Vec<&str> = s_e.get(0).unwrap().split(':').collect();
                 let e_h_m: Vec<&str> = s_e.get(1).unwrap().split(':').collect();
@@ -199,14 +206,15 @@ impl<'a> App<'a> {
                         )
                     )
                     .unwrap(),
-                    String::from("Test")
+                    self.input_description.clone()
                 );
                 self
                 .files
-                .add_event(event.clone())
+                .add_event(event)
                 .unwrap();
 
-                self.input = String::new();
+                self.input_time = String::new();
+                self.input_description = String::new();
             }
             1 => self.files.add_todo("todo", "TODO").unwrap(),
         }
@@ -270,21 +278,37 @@ fn run_app<B: Backend>(
                             _ => {}
                         }
                     },
-                    InputMode::Adding => match key.code {
+                    InputMode::AddingTime => match key.code {
                         KeyCode::Enter => {
                             //app.messages.push(app.input.drain(..).collect());
-                            app.on_add_item();
-                            app.input_mode = InputMode::Normal;
+                            //app.on_add_item();
+                            app.input_mode = InputMode::AddingDescription;
 
                         }
                         KeyCode::Char(c) => {
-                            app.input.push(c);
+                            app.input_time.push(c);
                         }
                         KeyCode::Backspace => {
-                            app.input.pop();
+                            app.input_time.pop();
                         }
                         KeyCode::Esc => {
                             app.input_mode = InputMode::Normal;
+                        }
+                        _ => {}
+                    },
+                    InputMode::AddingDescription => match key.code {
+                        KeyCode::Enter => {
+                            app.on_add_item();
+                            app.input_mode = InputMode::Normal;
+                        }
+                        KeyCode::Char(c) => {
+                            app.input_description.push(c);
+                        }
+                        KeyCode::Backspace => {
+                            app.input_description.pop();
+                        }
+                        KeyCode::Esc => {
+                            app.input_mode = InputMode::AddingTime;
                         }
                         _ => {}
                     },

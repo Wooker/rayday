@@ -148,17 +148,29 @@ where
 
     f.render_stateful_widget(ev, chunks[1], &mut app.chosen_event);
 
-    let popup = PopupAdd::new(&app.input, &app.input_mode)
+    let popup = PopupAdd::new(&app.input_time, &app.input_description, &app.input_mode)
         .block(Block::default().title("Popup").borders(Borders::ALL).border_type(tui::widgets::BorderType::Thick));
 
     match app.input_mode {
-        InputMode::Adding => {
-            let area = centered_rect(60, 20, chunks[1]);
+        InputMode::AddingTime => {
+            let area = centered_rect(40, 11, chunks[1]);
             f.set_cursor(
                 // Put cursor past the end of the input text
-                area.x + app.input.len() as u16 + 1,
+                area.x + app.input_time.len() as u16 + 1,
                 // Move one line down, from the border to the input line
                 area.y + 1,
+            );
+            f.render_widget(Clear, area); //this clears out the background
+            f.render_widget(popup, area);
+            //f.render_widget(popup, area)
+        }
+        InputMode::AddingDescription => {
+            let area = centered_rect(40, 11, chunks[1]);
+            f.set_cursor(
+                // Put cursor past the end of the input text
+                area.x + app.input_description.len() as u16 + 1,
+                // Move one line down, from the border to the input line
+                area.y + 4,
             );
             f.render_widget(Clear, area); //this clears out the background
             f.render_widget(popup, area);

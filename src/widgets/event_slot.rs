@@ -52,7 +52,7 @@ impl<'a> Widget for EventSlot<'a> {
                     color: self.border_color,
                 });
                 ctx.layer();
-                ctx.print(area.width as f64 / 2.0, -start - duration / 2.0, Spans::from(vec![
+                ctx.print((area.width as f64 / 2.0) - self.event.desc().len() as f64 / 2.0, -start - duration / 2.0, Spans::from(vec![
                     Span::raw(self.event.desc()),
                 ]));
             });

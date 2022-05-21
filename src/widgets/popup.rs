@@ -7,14 +7,15 @@ use tui::{
 use crate::app::InputMode;
 
 pub struct PopupAdd<'a> {
-    input: &'a String,
+    time: &'a String,
+    description: &'a String,
     input_mode: &'a InputMode,
     block: Option<Block<'a>>,
 }
 
 impl<'a> PopupAdd<'a> {
-    pub fn new(input: &'a String, input_mode: &'a InputMode) -> Self {
-        PopupAdd { input, input_mode, block: None }
+    pub fn new(time: &'a String, description: &'a String, input_mode: &'a InputMode) -> Self {
+        PopupAdd { time, description, input_mode, block: None }
     }
 
     pub fn block(mut self, block: Block<'a>) -> PopupAdd<'a> {
@@ -60,12 +61,25 @@ impl<'a> Widget for PopupAdd<'a> {
             None => area,
         };
 
-        let input = Paragraph::new(self.input.as_ref())
+        let layout = Layout::default()
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .direction(Direction::Vertical)
+            .split(area);
+
+        let time_par = Paragraph::new(self.time.as_ref())
             .style(match self.input_mode {
-                InputMode::Adding => Style::default().fg(Color::Yellow),
+                InputMode::AddingTime => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
             })
             .block(Block::default().borders(Borders::ALL).title("Add Event"));
-        input.render(area, buf);
+        time_par.render(layout[0], buf);
+
+        let description_par = Paragraph::new(self.description.as_ref())
+            .style(match self.input_mode {
+                InputMode::AddingDescription => Style::default().fg(Color::Yellow),
+                _ => Style::default(),
+            })
+            .block(Block::default().borders(Borders::ALL).title("Add Event"));
+        description_par.render(layout[1], buf);
     }
 }

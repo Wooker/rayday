@@ -83,11 +83,13 @@ impl<'a> CalendarWidget<'a> {
 
         let mut curr_date = first_date;
 
-        // i, j - new indicies for (month, day)
-        let mut curr_month = MonthWidget::new(curr_date.month()).style(Style::default().fg(Color::White));
+        let month_style = Style::default().fg(Color::LightCyan);
 
-        let mut h = 0;
-        while h < height - 2 {
+        // i, j - new indicies for (month, day)
+        let mut curr_month = MonthWidget::new(curr_date.month()).style(month_style);
+
+        let mut h = 1;
+        while h < height - 1 {
             // When new month starts store the month in `months` vec and clear `month`
             if curr_date.day() == 1 && !curr_month.days.is_empty() {
                 //let mut height = curr_month.days.len() / 7 + 1; // days + slot for month name
@@ -95,7 +97,7 @@ impl<'a> CalendarWidget<'a> {
                     curr_month.height += 1;
                 }
                 months.push(curr_month);
-                curr_month = MonthWidget::new(curr_date.month()).style(Style::default().fg(Color::LightCyan));
+                curr_month = MonthWidget::new(curr_date.month()).style(month_style);
                 h += 2;
             }
 
