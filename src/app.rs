@@ -1,4 +1,4 @@
-use crate::{ui, widgets::event_view::EventState};
+use crate::{ui, widgets::{event_view::EventState, weeks::Weeks}};
 use chrono::prelude::*;
 use crossterm::{
     event::{
@@ -20,7 +20,7 @@ use tui::{
 };
 
 use crate::{
-    config::Files,
+    config::ConfigFiles,
     calendar::Calendar,
     event::{Event as CalEvent, EventTime as CalEventTime, Today},
 };
@@ -62,7 +62,7 @@ pub struct App<'a> {
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
-    pub files: Files,
+    pub files: ConfigFiles,
     pub calendar: Calendar,
     pub starting_date: Date<Local>,
     pub chosen_date: Date<Local>,
@@ -78,9 +78,10 @@ pub struct App<'a> {
 
 impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
-        let files = Files::new().unwrap();
+        let files = ConfigFiles::new().unwrap();
         let calendar = Calendar::new();
         let now = Local::now().date();
+
         App {
             title,
             should_quit: false,
@@ -103,34 +104,46 @@ impl<'a> App<'a> {
 
     pub fn on_up(&mut self) {
         self.chosen_date = self.chosen_date.checked_sub_signed(ChronoDuration::weeks(1)).unwrap();
+        /*
         if self.chosen_date.lt(&self.first_date.unwrap()) {
             self.first_date = self.first_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
             self.last_date = self.last_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
         }
+        self.input_time = self.last_date.unwrap().to_string();
+        */
     }
 
     pub fn on_left(&mut self) {
         self.chosen_date = self.chosen_date.checked_sub_signed(ChronoDuration::days(1)).unwrap();
+        /*
         if self.chosen_date.lt(&self.first_date.unwrap()) {
             self.first_date = self.first_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
             self.last_date = self.last_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
         }
+        self.input_time = self.last_date.unwrap().to_string();
+        */
     }
 
     pub fn on_down(&mut self) {
         self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::weeks(1)).unwrap();
+        /*
         if self.chosen_date.gt(&self.last_date.unwrap()) {
             self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
             self.last_date = self.last_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
         }
+        self.input_time = self.last_date.unwrap().to_string();
+        */
     }
 
     pub fn on_right(&mut self) {
         self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::days(1)).unwrap();
+        /*
         if self.chosen_date.gt(&self.last_date.unwrap()) {
             self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
             self.last_date = self.last_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
         }
+        self.input_time = self.last_date.unwrap().to_string();
+        */
     }
 
     pub fn on_key(&mut self, c: char) {
@@ -204,8 +217,7 @@ impl<'a> App<'a> {
                             e_h.parse::<u32>().unwrap(),
                             e_m.parse::<u32>().unwrap()
                         )
-                    )
-                    .unwrap(),
+                    ).unwrap(),
                     self.input_description.clone()
                 );
                 self

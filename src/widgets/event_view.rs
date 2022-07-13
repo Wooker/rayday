@@ -2,7 +2,7 @@ use tui::{
     layout::Rect,
     text::Spans,
     buffer::Buffer,
-    widgets::{StatefulWidget, Widget, Block, canvas::{Line, Canvas}, Borders}, text::Text, style::{Style, Color}
+    widgets::{StatefulWidget, Widget, Block, canvas::{Line, Canvas}, Borders, self}, text::Text, style::{Style, Color}
 };
 
 use crate::{event::Event, app::InputMode};
@@ -66,6 +66,11 @@ impl<'a> StatefulWidget for EventView<'a> {
     type State = EventState;
 
     fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+        /*
+        let debug = widgets::Paragraph::new(format!("{} {} {} {}", area.x, area.y, area.width, area.height)).style(Style::default().bg(Color::Blue));
+        debug.render(area, buf);
+        */
+
         buf.set_style(area, self.style);
         let block_area = match self.block.take() {
             Some(b) => {

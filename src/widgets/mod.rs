@@ -1,3 +1,4 @@
+pub mod weeks;
 pub mod calendar;
 pub mod event_view;
 pub mod grid;

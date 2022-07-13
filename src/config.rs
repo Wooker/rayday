@@ -41,7 +41,7 @@ impl Default for Config {
     }
 }
 
-pub struct Files {
+pub struct ConfigFiles {
     config_dir: PathBuf,
     pub config: Config,
     events: PickleDb,
@@ -49,8 +49,8 @@ pub struct Files {
 }
 
 
-impl Files {
-    pub fn new() -> Result<Files, Error> {
+impl ConfigFiles {
+    pub fn new() -> Result<ConfigFiles, Error> {
         match dirs::home_dir() {
             Some(home) => {
                 let path = Path::new(&home);
@@ -98,7 +98,7 @@ impl Files {
                     .unwrap();
                 }
 
-                Ok(Files {
+                Ok(ConfigFiles {
                     config_dir: app_config_dir,
                     config,
                     events: events_db,
@@ -191,14 +191,14 @@ mod tests {
 
     #[test]
     fn config() {
-        let mut files = Files::new().unwrap();
+        let mut files = ConfigFiles::new().expect("Could not read config files");
 
         assert_eq!(Color::LightBlue, files.config.color);
     }
 
     #[test]
     fn add_event() {
-        let mut cal = Files::new().unwrap();
+        let mut cal = ConfigFiles::new().unwrap();
 
 
         cal.add_event(Event::new(EventTime::today(12, 0, Duration::minutes(30)), "Event today!".to_string()));

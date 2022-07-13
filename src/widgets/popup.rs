@@ -71,7 +71,7 @@ impl<'a> Widget for PopupAdd<'a> {
                 InputMode::AddingTime => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
             })
-            .block(Block::default().borders(Borders::ALL).title("Add Event"));
+            .block(Block::default().borders(Borders::ALL).title("Time"));
         time_par.render(layout[0], buf);
 
         let description_par = Paragraph::new(self.description.as_ref())
@@ -79,7 +79,7 @@ impl<'a> Widget for PopupAdd<'a> {
                 InputMode::AddingDescription => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
             })
-            .block(Block::default().borders(Borders::ALL).title("Add Event"));
+            .block(Block::default().borders(Borders::ALL).title("Description"));
         description_par.render(layout[1], buf);
     }
 }

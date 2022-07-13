@@ -1,6 +1,8 @@
 #![deny(warnings)]
 #![allow(unused)]
 
+#![feature(int_roundings)]
+
 mod app;
 mod config;
 mod calendar;
@@ -10,10 +12,6 @@ mod widgets;
 mod lib;
 
 use app::run;
-
-use crate::config::Files;
-use chrono::{prelude::*, Duration};
-use event::{Event, EventTime, Today};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {

@@ -1,4 +1,6 @@
-use tui::{widgets::{canvas::{Canvas, Line, Context, Shape, Painter}, Block, Borders, Widget}, layout::Rect, style::{Color, Style}, text::{Spans, Span}};
+use std::ops::Neg;
+
+use tui::{widgets::{canvas::{Canvas, Line, Context, Shape, Painter}, Block, Borders, Widget, self}, layout::Rect, style::{Color, Style}, text::{Spans, Span}};
 
 use super::grid::Grid;
 
@@ -23,19 +25,25 @@ impl TimeGrid {
 
 impl Widget for TimeGrid {
     fn render(self, area: tui::layout::Rect, buf: &mut tui::buffer::Buffer) {
+        /*
+        let debug = widgets::Paragraph::new(format!("{} {} {} {}", area.x, area.y, area.width, area.height));
+        debug.render(area, buf);
+        */
+
+
         let m = Canvas::default()
             .x_bounds([0.0, area.width.into()])
-            .y_bounds([-240.0, 0.0])
+            .y_bounds([-24.0, 0.0])
             .paint(|ctx| {
                 for line in (0..24).rev() {
                     ctx.draw(&Line {
                         x1: 0.0,
-                        y1: (-line * 10).into(),
+                        y1: (-line).into(),
                         x2: (area.width - 5).into(),
-                        y2: (-line * 10).into(),
-                        color: Color::Gray,
+                        y2: (-line).into(),
+                        color: Color::Yellow,
                     });
-                    ctx.print((area.width - 4).into(), (-line * 10).into(), Spans::from(vec![
+                    ctx.print((area.width - 4).into(), (-line).into(), Spans::from(vec![
                         Span::raw(format!("{:0>2}:00", line)),
                     ]));
                 }
