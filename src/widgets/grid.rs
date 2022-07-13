@@ -1,4 +1,11 @@
-use tui::{widgets::{canvas::{Canvas, Line, Context, Shape, Painter}, Block}, layout::Rect, style::Color};
+use tui::{
+    layout::Rect,
+    style::Color,
+    widgets::{
+        canvas::{Canvas, Context, Line, Painter, Shape},
+        Block,
+    },
+};
 
 pub struct Grid {
     pub x1: f64,
@@ -26,4 +33,3 @@ impl Shape for Grid {
         }
     }
 }
-

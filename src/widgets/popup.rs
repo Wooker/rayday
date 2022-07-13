@@ -1,7 +1,7 @@
 use tui::{
-    layout::{Layout, Direction, Constraint, Rect},
-    widgets::{Widget, Paragraph, Borders, Block},
-    style::{Style, Color},
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Style},
+    widgets::{Block, Borders, Paragraph, Widget},
 };
 
 use crate::app::InputMode;
@@ -15,7 +15,12 @@ pub struct PopupAdd<'a> {
 
 impl<'a> PopupAdd<'a> {
     pub fn new(time: &'a String, description: &'a String, input_mode: &'a InputMode) -> Self {
-        PopupAdd { time, description, input_mode, block: None }
+        PopupAdd {
+            time,
+            description,
+            input_mode,
+            block: None,
+        }
     }
 
     pub fn block(mut self, block: Block<'a>) -> PopupAdd<'a> {
@@ -57,7 +62,7 @@ impl<'a> Widget for PopupAdd<'a> {
                 let inner_area = b.inner(area);
                 b.render(area, buf);
                 inner_area
-            },
+            }
             None => area,
         };
 

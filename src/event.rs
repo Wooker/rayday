@@ -38,7 +38,11 @@ impl EventTime {
         }
     }
 
-    pub fn new_md(date: Date<Local>, start: (u32, u32), end: (u32, u32)) -> Result<EventTime, EventTimeError> {
+    pub fn new_md(
+        date: Date<Local>,
+        start: (u32, u32),
+        end: (u32, u32),
+    ) -> Result<EventTime, EventTimeError> {
         let start = date.and_hms(start.0, start.1, 0);
         let end = date.and_hms(end.0, end.1, 0);
 
@@ -100,10 +104,10 @@ impl Today for EventTime {
     }
 
     fn now(d: Duration) -> EventTime {
-        let now =Local::now().with_nanosecond(0).unwrap();
+        let now = Local::now().with_nanosecond(0).unwrap();
         EventTime {
             start: now,
-            end: now.checked_add_signed(d).unwrap()
+            end: now.checked_add_signed(d).unwrap(),
         }
     }
 }

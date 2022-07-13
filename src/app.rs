@@ -1,4 +1,7 @@
-use crate::{ui, widgets::{event_view::EventState, weeks::Weeks}};
+use crate::{
+    ui,
+    widgets::{event_view::EventState, weeks::Weeks},
+};
 use chrono::prelude::*;
 use crossterm::{
     event::{
@@ -9,9 +12,10 @@ use crossterm::{
 };
 use rayday::get_days_from_month;
 use std::{
+    borrow::Borrow,
     error::Error,
     io,
-    time::{Duration, Instant}, borrow::Borrow,
+    time::{Duration, Instant},
 };
 use tui::{
     backend::{Backend, CrosstermBackend},
@@ -20,8 +24,8 @@ use tui::{
 };
 
 use crate::{
-    config::ConfigFiles,
     calendar::Calendar,
+    config::ConfigFiles,
     event::{Event as CalEvent, EventTime as CalEventTime, Today},
 };
 
@@ -103,7 +107,10 @@ impl<'a> App<'a> {
     }
 
     pub fn on_up(&mut self) {
-        self.chosen_date = self.chosen_date.checked_sub_signed(ChronoDuration::weeks(1)).unwrap();
+        self.chosen_date = self
+            .chosen_date
+            .checked_sub_signed(ChronoDuration::weeks(1))
+            .unwrap();
         /*
         if self.chosen_date.lt(&self.first_date.unwrap()) {
             self.first_date = self.first_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
@@ -114,7 +121,10 @@ impl<'a> App<'a> {
     }
 
     pub fn on_left(&mut self) {
-        self.chosen_date = self.chosen_date.checked_sub_signed(ChronoDuration::days(1)).unwrap();
+        self.chosen_date = self
+            .chosen_date
+            .checked_sub_signed(ChronoDuration::days(1))
+            .unwrap();
         /*
         if self.chosen_date.lt(&self.first_date.unwrap()) {
             self.first_date = self.first_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
@@ -125,7 +135,10 @@ impl<'a> App<'a> {
     }
 
     pub fn on_down(&mut self) {
-        self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::weeks(1)).unwrap();
+        self.chosen_date = self
+            .chosen_date
+            .checked_add_signed(ChronoDuration::weeks(1))
+            .unwrap();
         /*
         if self.chosen_date.gt(&self.last_date.unwrap()) {
             self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
@@ -136,7 +149,10 @@ impl<'a> App<'a> {
     }
 
     pub fn on_right(&mut self) {
-        self.chosen_date = self.chosen_date.checked_add_signed(ChronoDuration::days(1)).unwrap();
+        self.chosen_date = self
+            .chosen_date
+            .checked_add_signed(ChronoDuration::days(1))
+            .unwrap();
         /*
         if self.chosen_date.gt(&self.last_date.unwrap()) {
             self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
@@ -174,7 +190,8 @@ impl<'a> App<'a> {
     }
 
     pub fn on_ctrl_key(&mut self, c: char) {
-        match c { 'h' => {
+        match c {
+            'h' => {
                 self.on_left();
             }
             'l' => {
@@ -184,16 +201,12 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn on_tick(&mut self) {
-    }
+    pub fn on_tick(&mut self) {}
 
     pub fn event_on_key(&mut self, c: char) {
         match c {
-            'j' => {
-
-            }
-            'k' => {
-            }
+            'j' => {}
+            'k' => {}
             _ => {}
         }
     }
@@ -210,20 +223,15 @@ impl<'a> App<'a> {
                 let (e_h, e_m) = (e_h_m.get(0).unwrap(), e_h_m.get(1).unwrap());
 
                 let event = CalEvent::new(
-                    CalEventTime::new_md(self.chosen_date, (
-                            s_h.parse::<u32>().unwrap(),
-                            s_m.parse::<u32>().unwrap()
-                        ), (
-                            e_h.parse::<u32>().unwrap(),
-                            e_m.parse::<u32>().unwrap()
-                        )
-                    ).unwrap(),
-                    self.input_description.clone()
+                    CalEventTime::new_md(
+                        self.chosen_date,
+                        (s_h.parse::<u32>().unwrap(), s_m.parse::<u32>().unwrap()),
+                        (e_h.parse::<u32>().unwrap(), e_m.parse::<u32>().unwrap()),
+                    )
+                    .unwrap(),
+                    self.input_description.clone(),
                 );
-                self
-                .files
-                .add_event(event)
-                .unwrap();
+                self.files.add_event(event).unwrap();
 
                 self.input_time = String::new();
                 self.input_description = String::new();
@@ -276,26 +284,23 @@ fn run_app<B: Backend>(
         if crossterm::event::poll(timeout)? {
             if let Event::Key(key) = event::read()? {
                 match app.input_mode {
-                    InputMode::Normal => {
-                        match key.code {
-                            KeyCode::Char(c) if key.modifiers == KeyModifiers::CONTROL => {
-                                app.on_ctrl_key(c)
-                            }
-                            KeyCode::Char(c) => app.on_key(c),
-                            KeyCode::Left => app.on_left(),
-                            KeyCode::Up => app.on_up(),
-                            KeyCode::Right => app.on_right(),
-                            KeyCode::Down => app.on_down(),
-                            KeyCode::Enter => app.input_mode = InputMode::Selecting,
-                            _ => {}
+                    InputMode::Normal => match key.code {
+                        KeyCode::Char(c) if key.modifiers == KeyModifiers::CONTROL => {
+                            app.on_ctrl_key(c)
                         }
+                        KeyCode::Char(c) => app.on_key(c),
+                        KeyCode::Left => app.on_left(),
+                        KeyCode::Up => app.on_up(),
+                        KeyCode::Right => app.on_right(),
+                        KeyCode::Down => app.on_down(),
+                        KeyCode::Enter => app.input_mode = InputMode::Selecting,
+                        _ => {}
                     },
                     InputMode::AddingTime => match key.code {
                         KeyCode::Enter => {
                             //app.messages.push(app.input.drain(..).collect());
                             //app.on_add_item();
                             app.input_mode = InputMode::AddingDescription;
-
                         }
                         KeyCode::Char(c) => {
                             app.input_time.push(c);
@@ -328,7 +333,7 @@ fn run_app<B: Backend>(
                         KeyCode::Char(c) => app.event_on_key(c),
                         KeyCode::Esc => app.input_mode = InputMode::Normal,
                         _ => {}
-                    }
+                    },
                 }
             }
         }

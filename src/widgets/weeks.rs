@@ -1,6 +1,9 @@
-use chrono::{Date, Local, Duration, Datelike, Weekday, Month};
+use chrono::{Date, Datelike, Duration, Local, Month, Weekday};
 use num_traits::FromPrimitive;
-use tui::{text::{Text, Spans, Span}, style::{Style, Color}};
+use tui::{
+    style::{Color, Style},
+    text::{Span, Spans, Text},
+};
 
 #[derive(Debug)]
 pub struct Weeks<'a> {
@@ -9,9 +12,14 @@ pub struct Weeks<'a> {
 
 impl<'a> Weeks<'a> {
     pub fn new(today: Date<Local>, height: u16, width: u16) -> Self {
-        let start = today.checked_sub_signed(
-                Duration::weeks(height.div_ceil(4).try_into().expect("Could not convert u16 to i64"))
-        ).expect("Could not subtract date");
+        let start = today
+            .checked_sub_signed(Duration::weeks(
+                height
+                    .div_ceil(4)
+                    .try_into()
+                    .expect("Could not convert u16 to i64"),
+            ))
+            .expect("Could not subtract date");
 
         let a = start.weekday().number_from_monday() as i64 - 1;
         let mut curr_date = start.checked_sub_signed(Duration::days(a)).unwrap();
@@ -30,27 +38,27 @@ impl<'a> Weeks<'a> {
                 highlight_style = Style::default().fg(Color::White);
             }
 
-            spans.push(Span::styled(format!("{:>2}", curr_date.day().to_string()), highlight_style));
+            spans.push(Span::styled(
+                format!("{:>2}", curr_date.day().to_string()),
+                highlight_style,
+            ));
             spans.push(Span::raw(" "));
 
             curr_date = curr_date.succ();
-
 
             // Add Month name
             if curr_month != curr_date.month() {
                 curr_month = curr_date.month();
 
                 text.push(Spans::from(spans));
-                text.push(Spans::from(vec![
-                    Span::styled(
-                        format!(
-                            "{:^width$}",
-                            Month::from_u32(curr_month).unwrap().name(),
-                            width=(width as usize)
-                        ),
-                        Style::default().fg(Color::Cyan)
-                    )
-                ]));
+                text.push(Spans::from(vec![Span::styled(
+                    format!(
+                        "{:^width$}",
+                        Month::from_u32(curr_month).unwrap().name(),
+                        width = (width as usize)
+                    ),
+                    Style::default().fg(Color::Cyan),
+                )]));
                 spans = Vec::new();
                 for day in 0..curr_date.weekday().number_from_monday() - 1 {
                     spans.push(Span::raw("   "));
@@ -62,7 +70,6 @@ impl<'a> Weeks<'a> {
                 spans = Vec::new();
                 curr_height += 1;
             }
-
         }
 
         Weeks {

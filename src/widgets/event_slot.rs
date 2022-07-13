@@ -2,13 +2,18 @@ use std::ops::Mul;
 
 use chrono::Timelike;
 use tui::{
-    layout::Rect,
-    text::{Spans, Span},
     buffer::Buffer,
-    widgets::{StatefulWidget, Widget, Block, canvas::{Line, Canvas, Rectangle, Context}, Clear, Paragraph}, text::Text, style::{Style, Color}
+    layout::Rect,
+    style::{Color, Style},
+    text::Text,
+    text::{Span, Spans},
+    widgets::{
+        canvas::{Canvas, Context, Line, Rectangle},
+        Block, Clear, Paragraph, StatefulWidget, Widget,
+    },
 };
 
-use crate::event::{EventTime, Event};
+use crate::event::{Event, EventTime};
 
 pub struct EventSlot<'a> {
     event: &'a Event,
@@ -40,7 +45,7 @@ impl<'a> Widget for EventSlot<'a> {
             x: area.left(),
             y: area.top() + (start as f64 * area.height as f64 / 24.0).floor() as u16,
             width: area.width - 5,
-            height: (duration as f64 * area.height as f64 / 24.0).ceil() as u16
+            height: (duration as f64 * area.height as f64 / 24.0).ceil() as u16,
         };
 
         /*
@@ -62,15 +67,18 @@ impl<'a> Widget for EventSlot<'a> {
                 ctx.draw(rect);
                 ctx.layer();
                 //ctx.print((area.width as f64 / 2.0) - self.event.desc().len() as f64 / 2.0, -start - duration / 2.0, Spans::from(vec![
-                ctx.print(rect.x + (rect.width / 2.0) - self.event.desc().len() as f64 / 2.0, rect.y + (rect.height / 2.0), Spans::from(vec![
-                    Span::raw(self.event.desc() + " "),
-                    Span::raw(
-                        format!("({}-{})",
+                ctx.print(
+                    rect.x + (rect.width / 2.0) - self.event.desc().len() as f64 / 2.0,
+                    rect.y + (rect.height / 2.0),
+                    Spans::from(vec![
+                        Span::raw(self.event.desc() + " "),
+                        Span::raw(format!(
+                            "({}-{})",
                             start_datetime.format("%R").to_string(),
                             end_datetime.format("%R").to_string()
-                        )
-                    )
-                ]));
+                        )),
+                    ]),
+                );
             });
         &Clear.render(r, buf);
         canvas.render(area, buf);

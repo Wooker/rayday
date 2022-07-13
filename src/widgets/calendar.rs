@@ -1,21 +1,17 @@
+use chrono::{Date, Datelike, Duration, Local, Month, Weekday};
 use num_traits::cast::FromPrimitive;
-use chrono::{Date, Local, Datelike, Weekday, Month, Duration};
 use tui::{
     buffer::Buffer,
     layout::{Corner, Rect},
-    style::{Style, Color},
-    text::{Text, Spans, Span},
+    style::{Color, Style},
+    text::{Span, Spans, Text},
     widgets::{Block, StatefulWidget, Widget},
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::{
-    app::InputMode,
-    widgets::weeks::Weeks
-};
+use crate::{app::InputMode, widgets::weeks::Weeks};
 
 const DAY_WIDTH: u8 = 2;
-
 
 #[derive(Debug)]
 pub struct CalendarWidget<'a> {
@@ -26,7 +22,7 @@ pub struct CalendarWidget<'a> {
     highlight_style: Style,
     highlight_symbol: Option<&'a str>,
     //days: Vec<Date<Local>>,
-    content: Text<'a>
+    content: Text<'a>,
 }
 
 impl<'a> CalendarWidget<'a> {
@@ -41,7 +37,7 @@ impl<'a> CalendarWidget<'a> {
             highlight_style: Style::default(),
             highlight_symbol: None,
             //days,
-            content: weeks.content()
+            content: weeks.content(),
         }
     }
 
@@ -99,5 +95,4 @@ impl<'a> StatefulWidget for CalendarWidget<'a> {
 mod tests {
     use super::*;
     use crate::calendar::Calendar;
-
 }

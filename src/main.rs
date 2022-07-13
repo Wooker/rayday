@@ -1,15 +1,14 @@
 #![deny(warnings)]
 #![allow(unused)]
-
 #![feature(int_roundings)]
 
 mod app;
-mod config;
 mod calendar;
+mod config;
 mod event;
+mod lib;
 mod ui;
 mod widgets;
-mod lib;
 
 use app::run;
 use std::error::Error;

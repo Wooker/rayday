@@ -1,6 +1,15 @@
 use std::ops::Neg;
 
-use tui::{widgets::{canvas::{Canvas, Line, Context, Shape, Painter}, Block, Borders, Widget, self}, layout::Rect, style::{Color, Style}, text::{Spans, Span}};
+use tui::{
+    layout::Rect,
+    style::{Color, Style},
+    text::{Span, Spans},
+    widgets::{
+        self,
+        canvas::{Canvas, Context, Line, Painter, Shape},
+        Block, Borders, Widget,
+    },
+};
 
 use super::grid::Grid;
 
@@ -11,7 +20,7 @@ pub struct TimeGrid {
 
 impl TimeGrid {
     pub fn new(enhanced_graphics: bool) -> Self {
-        TimeGrid { 
+        TimeGrid {
             style: Style::default(),
             enhanced_graphics,
         }
@@ -30,7 +39,6 @@ impl Widget for TimeGrid {
         debug.render(area, buf);
         */
 
-
         let m = Canvas::default()
             .x_bounds([0.0, area.width.into()])
             .y_bounds([-24.0, 0.0])
@@ -43,9 +51,11 @@ impl Widget for TimeGrid {
                         y2: (-line).into(),
                         color: Color::Yellow,
                     });
-                    ctx.print((area.width - 4).into(), (-line).into(), Spans::from(vec![
-                        Span::raw(format!("{:0>2}:00", line)),
-                    ]));
+                    ctx.print(
+                        (area.width - 4).into(),
+                        (-line).into(),
+                        Spans::from(vec![Span::raw(format!("{:0>2}:00", line))]),
+                    );
                 }
             })
             .marker(if self.enhanced_graphics {

@@ -1,21 +1,31 @@
 use crate::{
     app::{App, InputMode},
     widgets::{
-        calendar::CalendarWidget, event_view::EventView, grid::Grid, time_grid::TimeGrid, popup::{centered_rect, PopupAdd}, weeks::Weeks}
+        calendar::CalendarWidget,
+        event_view::EventView,
+        grid::Grid,
+        popup::{centered_rect, PopupAdd},
+        time_grid::TimeGrid,
+        weeks::Weeks,
+    },
 };
 use tui::{
     backend::Backend,
+    buffer::Buffer,
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, Table, Row, Cell, StatefulWidget, ListState, canvas::{Canvas, Map, Line, Rectangle}, Widget, Clear},
-    buffer::Buffer,
+    widgets::{
+        canvas::{Canvas, Line, Map, Rectangle},
+        Block, Borders, Cell, Clear, List, ListItem, ListState, Paragraph, Row, StatefulWidget,
+        Table, Tabs, Widget, Wrap,
+    },
     Frame,
 };
 
-use pickledb::PickleDbIteratorItem;
 use chrono::prelude::*;
 use num_traits::FromPrimitive;
+use pickledb::PickleDbIteratorItem;
 
 use crate::event::Event;
 
@@ -112,39 +122,53 @@ where
     let info_style = Style::default().fg(Color::Blue);
 
     let weeks = Weeks::new(app.chosen_date, chunks[0].height - 10, chunks[0].width);
-    let mut calendar = CalendarWidget::new(
-        weeks,
-        app.chosen_date,
-        &app.input_mode
+    let mut calendar = CalendarWidget::new(weeks, app.chosen_date, &app.input_mode)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Calendar Widget"),
         )
-        .block(Block::default().borders(Borders::ALL).title("Calendar Widget"))
         .style(match app.input_mode {
             InputMode::Normal => Style::default().fg(Color::Yellow),
-            _ => Style::default()
+            _ => Style::default(),
         })
-        .highlight_style(Style::default().bg(app.files.config.color).add_modifier(Modifier::BOLD));
+        .highlight_style(
+            Style::default()
+                .bg(app.files.config.color)
+                .add_modifier(Modifier::BOLD),
+        );
     f.render_stateful_widget(calendar, chunks[0], &mut app.chosen_date);
 
-
-    let date = Local.ymd(app.chosen_date.year(), app.chosen_date.month(), app.chosen_date.day());
+    let date = Local.ymd(
+        app.chosen_date.year(),
+        app.chosen_date.month(),
+        app.chosen_date.day(),
+    );
     let ev = EventView::new(
         app.files.events_list(date),
         &app.input_mode,
-        app.enhanced_graphics
+        app.enhanced_graphics,
     )
-        .block(Block::default().borders(Borders::ALL).title(format!(
-            "{} {} {}", date.day(), Month::from_u32(date.month()).unwrap().name(), date.year()
-        )))
-        .style(match app.input_mode {
-            InputMode::Selecting => Style::default().fg(Color::Yellow),
-            _ => Style::default()
-        })
-        .highlight_style(Style::default().add_modifier(Modifier::BOLD));
+    .block(Block::default().borders(Borders::ALL).title(format!(
+        "{} {} {}",
+        date.day(),
+        Month::from_u32(date.month()).unwrap().name(),
+        date.year()
+    )))
+    .style(match app.input_mode {
+        InputMode::Selecting => Style::default().fg(Color::Yellow),
+        _ => Style::default(),
+    })
+    .highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
     f.render_stateful_widget(ev, chunks[1], &mut app.chosen_event);
 
-    let popup = PopupAdd::new(&app.input_time, &app.input_description, &app.input_mode)
-        .block(Block::default().title("Popup").borders(Borders::ALL).border_type(tui::widgets::BorderType::Thick));
+    let popup = PopupAdd::new(&app.input_time, &app.input_description, &app.input_mode).block(
+        Block::default()
+            .title("Popup")
+            .borders(Borders::ALL)
+            .border_type(tui::widgets::BorderType::Thick),
+    );
 
     match app.input_mode {
         InputMode::AddingTime => {
@@ -171,7 +195,7 @@ where
             f.render_widget(popup, area);
             //f.render_widget(popup, area)
         }
-        _ => {},
+        _ => {}
     }
 }
 
@@ -199,8 +223,6 @@ where
             let warning_style = Style::default().fg(Color::Yellow);
             let error_style = Style::default().fg(Color::Magenta);
             let critical_style = Style::default().fg(Color::Red);
-
-
         }
     }
 }

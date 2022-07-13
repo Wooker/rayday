@@ -1,13 +1,19 @@
 use tui::{
-    layout::Rect,
-    text::Spans,
     buffer::Buffer,
-    widgets::{StatefulWidget, Widget, Block, canvas::{Line, Canvas}, Borders, self}, text::Text, style::{Style, Color}
+    layout::Rect,
+    style::{Color, Style},
+    text::Spans,
+    text::Text,
+    widgets::{
+        self,
+        canvas::{Canvas, Line},
+        Block, Borders, StatefulWidget, Widget,
+    },
 };
 
-use crate::{event::Event, app::InputMode};
+use crate::{app::InputMode, event::Event};
 
-use super::{time_grid::TimeGrid, event_slot::EventSlot};
+use super::{event_slot::EventSlot, time_grid::TimeGrid};
 
 pub struct EventState {
     selected: Option<usize>,
@@ -61,7 +67,6 @@ impl<'a> EventView<'a> {
     }
 }
 
-
 impl<'a> StatefulWidget for EventView<'a> {
     type State = EventState;
 
@@ -92,15 +97,8 @@ impl<'a> StatefulWidget for EventView<'a> {
             return;
         }
 
-        for (i, event) in self
-            .events
-            .iter()
-            .enumerate()
-        {
-            let slot = EventSlot::new(
-                event,
-                Color::Yellow,
-                );
+        for (i, event) in self.events.iter().enumerate() {
+            let slot = EventSlot::new(event, Color::Yellow);
             slot.render(block_area, buf);
         }
     }

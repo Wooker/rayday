@@ -3,23 +3,20 @@ use anyhow::{anyhow, Error, Result};
 use confy::{load_path, store_path};
 use std::{
     collections::HashMap,
+    default::Default,
     fs,
     path::{Path, PathBuf},
-    default::Default,
 };
 
 use chrono::prelude::*;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 use tui::style::Color;
 
-use crate::{
-    event::{Event, EventTime, EventTimeError, Today},
-};
+use crate::event::{Event, EventTime, EventTimeError, Today};
 
 use pickledb::{
     error::{Error as PickleError, Result as PickleResult},
-    PickleDb, PickleDbDumpPolicy, PickleDbIterator,
-    SerializationMethod,
+    PickleDb, PickleDbDumpPolicy, PickleDbIterator, SerializationMethod,
 };
 
 const CONFIG_DIR: &str = ".config";
@@ -36,7 +33,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            color: Color::LightBlue
+            color: Color::LightBlue,
         }
     }
 }
@@ -47,7 +44,6 @@ pub struct ConfigFiles {
     events: PickleDb,
     todos: PickleDb,
 }
-
 
 impl ConfigFiles {
     pub fn new() -> Result<ConfigFiles, Error> {
@@ -129,7 +125,7 @@ impl ConfigFiles {
                 time.start_datetime().to_string(),
                 time.end_datetime().to_string()
             )
-            .as_str()
+            .as_str(),
         )
     }
 
@@ -139,7 +135,14 @@ impl ConfigFiles {
     }
 
     pub fn get_event(&self, time: EventTime) -> Option<Event> {
-        self.events.get(format!("{}|{}", time.start_datetime().to_string(), time.end_datetime().to_string()).as_str())
+        self.events.get(
+            format!(
+                "{}|{}",
+                time.start_datetime().to_string(),
+                time.end_datetime().to_string()
+            )
+            .as_str(),
+        )
     }
 
     pub fn get_events_on_date(&self, date: Date<Local>) -> Vec<Event> {
@@ -156,16 +159,16 @@ impl ConfigFiles {
             .collect()
     }
     pub fn events_list(&self, date: Date<Local>) -> Vec<Event> {
-            self.events
-                .iter()
-                .map(|e| {
-                    Event::new(
-                        EventTime::from(e.get_key()),
-                        e.get_value::<String>().unwrap(),
-                    )
-                })
-                .filter(|e| e.time().start_date() == date)
-                .collect()
+        self.events
+            .iter()
+            .map(|e| {
+                Event::new(
+                    EventTime::from(e.get_key()),
+                    e.get_value::<String>().unwrap(),
+                )
+            })
+            .filter(|e| e.time().start_date() == date)
+            .collect()
     }
 
     pub fn get_todo(&mut self, key: &str, value: &str) -> Result<()> {
@@ -200,15 +203,23 @@ mod tests {
     fn add_event() {
         let mut cal = ConfigFiles::new().unwrap();
 
-
-        cal.add_event(Event::new(EventTime::today(12, 0, Duration::minutes(30)), "Event today!".to_string()));
-        cal.add_event(Event::new(EventTime::today(12, 0, Duration::minutes(35)), "Another event!".to_string()));
+        cal.add_event(Event::new(
+            EventTime::today(12, 0, Duration::minutes(30)),
+            "Event today!".to_string(),
+        ));
+        cal.add_event(Event::new(
+            EventTime::today(12, 0, Duration::minutes(35)),
+            "Another event!".to_string(),
+        ));
 
         let events = cal.get_events_on_date(Local::today());
         dbg!(&events);
         assert_eq!(events.is_empty(), false);
         assert_eq!(events.iter().nth(0).unwrap().desc(), "Event today!");
 
-        cal.add_event(Event::new(EventTime::today(12, 0, Duration::minutes(40)), "Yet another event!".to_string()));
+        cal.add_event(Event::new(
+            EventTime::today(12, 0, Duration::minutes(40)),
+            "Yet another event!".to_string(),
+        ));
     }
 }
