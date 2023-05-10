@@ -22,7 +22,7 @@ pub struct CalendarWidget<'a> {
     highlight_style: Style,
     highlight_symbol: Option<&'a str>,
     //days: Vec<Date<Local>>,
-    content: Text<'a>,
+    pub content: Text<'a>,
 }
 
 impl<'a> CalendarWidget<'a> {
@@ -36,7 +36,6 @@ impl<'a> CalendarWidget<'a> {
             block: None,
             highlight_style: Style::default(),
             highlight_symbol: None,
-            //days,
             content: weeks.content(),
         }
     }

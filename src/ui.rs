@@ -1,3 +1,5 @@
+use std::ops::Div;
+
 use crate::{
     app::{App, InputMode},
     widgets::{
@@ -24,6 +26,7 @@ use tui::{
 };
 
 use chrono::prelude::*;
+use chrono::{Date, Datelike, Duration, Local, Month, Weekday};
 use num_traits::FromPrimitive;
 use pickledb::PickleDbIteratorItem;
 
@@ -121,7 +124,8 @@ where
 
     let info_style = Style::default().fg(Color::Blue);
 
-    let weeks = Weeks::new(app.chosen_date, chunks[0].height - 10, chunks[0].width);
+    let height_without_borders = chunks[0].height - 2;
+    let weeks = Weeks::new(app.chosen_date, height_without_borders, chunks[0].width);
     let mut calendar = CalendarWidget::new(weeks, app.chosen_date, &app.input_mode)
         .block(
             Block::default()
@@ -137,6 +141,7 @@ where
                 .bg(app.files.config.color)
                 .add_modifier(Modifier::BOLD),
         );
+    let weeks_text = calendar.content.clone();
     f.render_stateful_widget(calendar, chunks[0], &mut app.chosen_date);
 
     let date = Local.ymd(
@@ -150,10 +155,12 @@ where
         app.enhanced_graphics,
     )
     .block(Block::default().borders(Borders::ALL).title(format!(
-        "{} {} {}",
+        "{} {} {} {} {}",
         date.day(),
         Month::from_u32(date.month()).unwrap().name(),
-        date.year()
+        date.year(),
+        app.chosen_date,
+        Weeks::get_curr_date(app.chosen_date, chunks[0].height, chunks[0].width),
     )))
     .style(match app.input_mode {
         InputMode::Selecting => Style::default().fg(Color::Yellow),
