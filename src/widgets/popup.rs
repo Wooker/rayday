@@ -1,3 +1,5 @@
+use std::ops::Div;
+
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
@@ -29,14 +31,14 @@ impl<'a> PopupAdd<'a> {
     }
 }
 
-pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+pub fn centered_rect(height: u16, width: u16, r: Rect) -> Rect {
     let popup_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(
             [
-                Constraint::Percentage((100 - percent_y) / 2),
-                Constraint::Percentage(percent_y),
-                Constraint::Percentage((100 - percent_y) / 2),
+                Constraint::Length(r.height / 2 - height / 2),
+                Constraint::Length(height),
+                Constraint::Length(r.height / 2 - height / 2),
             ]
             .as_ref(),
         )
@@ -46,9 +48,9 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .direction(Direction::Horizontal)
         .constraints(
             [
-                Constraint::Percentage((100 - percent_x) / 2),
-                Constraint::Percentage(percent_x),
-                Constraint::Percentage((100 - percent_x) / 2),
+                Constraint::Length(r.width / 2 - width / 2),
+                Constraint::Length(width),
+                Constraint::Length(r.width / 2 - width / 2),
             ]
             .as_ref(),
         )

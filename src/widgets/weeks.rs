@@ -48,39 +48,13 @@ impl<'a> Weeks<'a> {
             .month()
             != curr_month
         {
+            // Set the current date to the first day of the month
             curr_date = curr_date
                 .checked_add_signed(Duration::days(
                     get_days_from_month(curr_date.year(), curr_month) - curr_date.day0() as i64,
                 ))
                 .unwrap();
         }
-
-        /*
-        if curr_date.day0() < 7 {
-            spans.push(Span::styled(
-                format!(
-                    "{:^width$}",
-                    Month::from_u32(curr_month).unwrap().name(),
-                    width = (width as usize)
-                ),
-                Style::default().fg(Color::Cyan),
-            ));
-            text.push(Spans::from(spans));
-            curr_height += 1;
-
-            spans = Vec::new();
-
-            curr_date = curr_date
-                .checked_sub_signed(Duration::days(curr_date.day0().into()))
-                .unwrap();
-        } else {
-            curr_date = curr_date
-                .checked_sub_signed(Duration::days(
-                    curr_date.weekday().num_days_from_monday().into(),
-                ))
-                .unwrap();
-        }
-        */
 
         while curr_height != height {
             if curr_date.month() != curr_month {

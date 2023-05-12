@@ -98,7 +98,7 @@ impl<'a> StatefulWidget for EventView<'a> {
         }
 
         for (i, event) in self.events.iter().enumerate() {
-            let slot = EventSlot::new(event, Color::Yellow);
+            let slot = EventSlot::new(event, Style::default().fg(Color::Blue));
             slot.render(block_area, buf);
         }
     }

@@ -61,9 +61,9 @@ impl ConfigFiles {
                     fs::create_dir(&home_config_dir)?;
                 }
 
-                let mut config: Config;
-                let mut events_db: PickleDb;
-                let mut todos_db: PickleDb;
+                let config: Config;
+                let events_db: PickleDb;
+                let todos_db: PickleDb;
                 if !app_config_dir.is_dir() {
                     fs::create_dir(&app_config_dir)?;
                     //fs::File::create(config_file_path);
@@ -194,7 +194,7 @@ mod tests {
 
     #[test]
     fn config() {
-        let mut files = ConfigFiles::new().expect("Could not read config files");
+        let files = ConfigFiles::new().expect("Could not read config files");
 
         assert_eq!(Color::LightBlue, files.config.color);
     }

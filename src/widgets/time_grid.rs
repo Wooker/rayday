@@ -46,9 +46,9 @@ impl Widget for TimeGrid {
                 for line in (0..24).rev() {
                     ctx.draw(&Line {
                         x1: 0.0,
-                        y1: (-line).into(),
-                        x2: (area.width - 5).into(),
-                        y2: (-line).into(),
+                        y1: -line as f64,
+                        x2: area.width as f64 - 5.0,
+                        y2: -line as f64,
                         color: Color::Yellow,
                     });
                     ctx.print(

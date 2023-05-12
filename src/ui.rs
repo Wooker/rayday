@@ -54,63 +54,6 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     };
 }
 
-fn draw_text<B>(f: &mut Frame<B>, area: Rect)
-where
-    B: Backend,
-{
-    let text = vec![
-        Spans::from("This is a paragraph with several lines. You can change style your text the way you want"),
-        Spans::from(""),
-        Spans::from(vec![
-            Span::from("For example: "),
-            Span::styled("under", Style::default().fg(Color::Red)),
-            Span::raw(" "),
-            Span::styled("the", Style::default().fg(Color::Green)),
-            Span::raw(" "),
-            Span::styled("rainbow", Style::default().fg(Color::Blue)),
-            Span::raw("."),
-        ]),
-        Spans::from(vec![
-            Span::raw("Oh and if you didn't "),
-            Span::styled("notice", Style::default().add_modifier(Modifier::ITALIC)),
-            Span::raw(" you can "),
-            Span::styled("automatically", Style::default().add_modifier(Modifier::BOLD)),
-            Span::raw(" "),
-            Span::styled("wrap", Style::default().add_modifier(Modifier::REVERSED)),
-            Span::raw(" your "),
-            Span::styled("text", Style::default().add_modifier(Modifier::UNDERLINED)),
-            Span::raw(".")
-        ]),
-        Spans::from(
-            "One more thing is that it should display unicode characters: 10€"
-        ),
-    ];
-    let block = Block::default().borders(Borders::ALL).title(Span::styled(
-        "Footer",
-        Style::default()
-            .fg(Color::Magenta)
-            .add_modifier(Modifier::BOLD),
-    ));
-    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
-    f.render_widget(paragraph, area);
-}
-
-fn draw_test<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
-where
-    B: Backend,
-{
-    let chunks = Layout::default()
-        .constraints([Constraint::Min(8), Constraint::Length(7)].as_ref())
-        .split(area);
-    {
-        let chunks = Layout::default()
-            .constraints([Constraint::Length(5), Constraint::Percentage(50)].as_ref())
-            .split(chunks[0]);
-        draw_text(f, chunks[0]);
-    }
-    draw_text(f, chunks[1]);
-}
-
 fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
 where
     B: Backend,
@@ -118,7 +61,7 @@ where
     let size = f.size();
 
     let chunks = Layout::default()
-        .constraints([Constraint::Length(24), Constraint::Min(10)].as_ref())
+        .constraints([Constraint::Length(22), Constraint::Min(10)].as_ref())
         .direction(Direction::Horizontal)
         .split(area);
 
@@ -155,12 +98,10 @@ where
         app.enhanced_graphics,
     )
     .block(Block::default().borders(Borders::ALL).title(format!(
-        "{} {} {} {} {}",
+        "{} {} {}",
         date.day(),
         Month::from_u32(date.month()).unwrap().name(),
         date.year(),
-        app.chosen_date,
-        Weeks::get_curr_date(app.chosen_date, chunks[0].height, chunks[0].width),
     )))
     .style(match app.input_mode {
         InputMode::Selecting => Style::default().fg(Color::Yellow),
@@ -179,28 +120,21 @@ where
 
     match app.input_mode {
         InputMode::AddingTime => {
-            let area = centered_rect(40, 11, chunks[1]);
+            let area = centered_rect(6, 20, chunks[1]);
             f.set_cursor(
                 // Put cursor past the end of the input text
                 area.x + app.input_time.len() as u16 + 1,
                 // Move one line down, from the border to the input line
                 area.y + 1,
             );
-            f.render_widget(Clear, area); //this clears out the background
+            f.render_widget(Clear, area); //clear the background
             f.render_widget(popup, area);
-            //f.render_widget(popup, area)
         }
         InputMode::AddingDescription => {
-            let area = centered_rect(40, 11, chunks[1]);
-            f.set_cursor(
-                // Put cursor past the end of the input text
-                area.x + app.input_description.len() as u16 + 1,
-                // Move one line down, from the border to the input line
-                area.y + 4,
-            );
-            f.render_widget(Clear, area); //this clears out the background
+            let area = centered_rect(6, 20, chunks[1]);
+            f.set_cursor(area.x + app.input_description.len() as u16 + 1, area.y + 4);
+            f.render_widget(Clear, area);
             f.render_widget(popup, area);
-            //f.render_widget(popup, area)
         }
         _ => {}
     }
