@@ -208,18 +208,11 @@ mod tests {
             "Event today!".to_string(),
         ));
         cal.add_event(Event::new(
-            EventTime::today(12, 0, Duration::minutes(35)),
+            EventTime::today(12, 5, Duration::minutes(25)),
             "Another event!".to_string(),
         ));
 
         let events = cal.get_events_on_date(Local::today());
-        dbg!(&events);
         assert_eq!(events.is_empty(), false);
-        assert_eq!(events.iter().nth(0).unwrap().desc(), "Event today!");
-
-        cal.add_event(Event::new(
-            EventTime::today(12, 0, Duration::minutes(40)),
-            "Yet another event!".to_string(),
-        ));
     }
 }

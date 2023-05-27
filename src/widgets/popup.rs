@@ -8,11 +8,15 @@ use tui::{
 
 use crate::app::InputMode;
 
+pub const WIDTH: u16 = 30;
+pub const HEIGHT: u16 = 8;
+
 pub struct PopupAdd<'a> {
     time: &'a String,
     description: &'a String,
     input_mode: &'a InputMode,
-    block: Option<Block<'a>>,
+    pub block: Option<Block<'a>>,
+    error_message: Option<&'a str>,
 }
 
 impl<'a> PopupAdd<'a> {
@@ -22,6 +26,7 @@ impl<'a> PopupAdd<'a> {
             description,
             input_mode,
             block: None,
+            error_message: None,
         }
     }
 
@@ -59,6 +64,7 @@ pub fn centered_rect(height: u16, width: u16, r: Rect) -> Rect {
 
 impl<'a> Widget for PopupAdd<'a> {
     fn render(mut self, area: Rect, buf: &mut tui::buffer::Buffer) {
+        let title = String::from("Time");
         let block_area = match self.block.take() {
             Some(b) => {
                 let inner_area = b.inner(area);
@@ -71,14 +77,14 @@ impl<'a> Widget for PopupAdd<'a> {
         let layout = Layout::default()
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
             .direction(Direction::Vertical)
-            .split(area);
+            .split(block_area);
 
         let time_par = Paragraph::new(self.time.as_ref())
             .style(match self.input_mode {
                 InputMode::AddingTime => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
             })
-            .block(Block::default().borders(Borders::ALL).title("Time"));
+            .block(Block::default().borders(Borders::ALL).title("Time (hh:mm)"));
         time_par.render(layout[0], buf);
 
         let description_par = Paragraph::new(self.description.as_ref())

@@ -146,7 +146,7 @@ mod tests {
         let end = Local.ymd(2022, 5, 27).and_hms(12, 30, 0);
 
         let e = EventTime::new(start, end);
-        assert_eq!(e.is_ok(), true);
+        assert!(e.is_ok());
     }
 
     #[test]

@@ -6,7 +6,7 @@ use crate::{
         calendar::CalendarWidget,
         event_view::EventView,
         grid::Grid,
-        popup::{centered_rect, PopupAdd},
+        popup::{self, centered_rect, PopupAdd},
         time_grid::TimeGrid,
         weeks::Weeks,
     },
@@ -14,13 +14,13 @@ use crate::{
 use tui::{
     backend::Backend,
     buffer::Buffer,
-    layout::{Constraint, Corner, Direction, Layout, Rect},
+    layout::{Constraint, Corner, Direction, Layout, Margin, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{
         canvas::{Canvas, Line, Map, Rectangle},
-        Block, Borders, Cell, Clear, List, ListItem, ListState, Paragraph, Row, StatefulWidget,
-        Table, Tabs, Widget, Wrap,
+        Block, BorderType, Borders, Cell, Clear, List, ListItem, ListState, Paragraph, Row,
+        StatefulWidget, Table, Tabs, Widget, Wrap,
     },
     Frame,
 };
@@ -92,6 +92,7 @@ where
         app.chosen_date.month(),
         app.chosen_date.day(),
     );
+
     let ev = EventView::new(
         app.files.events_list(date),
         &app.input_mode,
@@ -108,35 +109,47 @@ where
         _ => Style::default(),
     })
     .highlight_style(Style::default().add_modifier(Modifier::BOLD));
-
     f.render_stateful_widget(ev, chunks[1], &mut app.chosen_event);
 
     let popup = PopupAdd::new(&app.input_time, &app.input_description, &app.input_mode).block(
         Block::default()
-            .title("Popup")
+            .title("Add event")
             .borders(Borders::ALL)
-            .border_type(tui::widgets::BorderType::Thick),
+            .border_style(Style::default().fg(Color::White))
+            .border_type(BorderType::Rounded)
+            .style(Style::default().bg(Color::Black)),
     );
 
     match app.input_mode {
         InputMode::AddingTime => {
-            let area = centered_rect(6, 20, chunks[1]);
+            let area = if let Some(block) = &popup.block {
+                block.inner(centered_rect(popup::HEIGHT + 2, popup::WIDTH, chunks[1]))
+            } else {
+                centered_rect(popup::HEIGHT, popup::WIDTH, chunks[1])
+            };
             f.set_cursor(
                 // Put cursor past the end of the input text
-                area.x + app.input_time.len() as u16 + 1,
+                area.x + app.input_time.len() as u16 + 2,
                 // Move one line down, from the border to the input line
-                area.y + 1,
+                area.y + 2, // Title + field name
             );
             f.render_widget(Clear, area); //clear the background
             f.render_widget(popup, area);
         }
         InputMode::AddingDescription => {
-            let area = centered_rect(6, 20, chunks[1]);
-            f.set_cursor(area.x + app.input_description.len() as u16 + 1, area.y + 4);
+            let area = if let Some(block) = &popup.block {
+                block.inner(centered_rect(popup::HEIGHT + 2, popup::WIDTH, chunks[1]))
+            } else {
+                centered_rect(popup::HEIGHT, popup::WIDTH, chunks[1])
+            };
+            f.set_cursor(area.x + app.input_description.len() as u16 + 2, area.y + 5);
             f.render_widget(Clear, area);
             f.render_widget(popup, area);
         }
-        _ => {}
+        _ => {
+            app.input_time = "".to_string();
+            app.input_description = "".to_string();
+        }
     }
 }
 
