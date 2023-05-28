@@ -107,6 +107,8 @@ impl<'a> App<'a> {
                     .chosen_date
                     .checked_sub_signed(ChronoDuration::weeks(1))
                     .unwrap();
+                self.chosen_event =
+                    EventViewState::new(None, self.files.get_events_on_date(self.chosen_date));
             }
             InputMode::Selecting => {
                 self.chosen_event.selected = if let Some(sel) = self.chosen_event.selected {
@@ -126,6 +128,8 @@ impl<'a> App<'a> {
                     .chosen_date
                     .checked_sub_signed(ChronoDuration::days(1))
                     .unwrap();
+                self.chosen_event =
+                    EventViewState::new(None, self.files.get_events_on_date(self.chosen_date));
             }
             _ => {}
         }
@@ -138,6 +142,8 @@ impl<'a> App<'a> {
                     .chosen_date
                     .checked_add_signed(ChronoDuration::weeks(1))
                     .unwrap();
+                self.chosen_event =
+                    EventViewState::new(None, self.files.get_events_on_date(self.chosen_date));
             }
             InputMode::Selecting => {
                 self.chosen_event.selected = if let Some(sel) = self.chosen_event.selected {
@@ -161,6 +167,8 @@ impl<'a> App<'a> {
                     .chosen_date
                     .checked_add_signed(ChronoDuration::days(1))
                     .unwrap();
+                self.chosen_event =
+                    EventViewState::new(None, self.files.get_events_on_date(self.chosen_date));
             }
             _ => {}
         }

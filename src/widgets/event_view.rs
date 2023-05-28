@@ -78,11 +78,6 @@ impl<'a> StatefulWidget for EventView<'a> {
     type State = EventViewState;
 
     fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        /*
-        let debug = widgets::Paragraph::new(format!("{} {} {} {}", area.x, area.y, area.width, area.height)).style(Style::default().bg(Color::Blue));
-        debug.render(area, buf);
-        */
-
         buf.set_style(area, self.style);
         let block_area = match self.block.take() {
             Some(b) => {

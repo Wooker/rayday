@@ -87,20 +87,21 @@ where
         );
     f.render_stateful_widget(calendar, chunks[0], &mut app.chosen_date);
 
-    let date = app.chosen_date.clone();
-
     let mut ev = EventView::new(
-        app.files.get_events_on_date(date),
+        app.files.get_events_on_date(app.chosen_date),
         &app.input_mode,
         app.enhanced_graphics,
     )
     .block(Block::default().borders(Borders::ALL).title(format!(
-        "{} {} {} - {}",
+        "{} {} {} {}",
         app.chosen_date.day(),
-        Month::from_u32(date.month()).unwrap().name(),
+        Month::from_u32(app.chosen_date.month()).unwrap().name(),
         app.chosen_date.year(),
         if let Some(i) = app.chosen_event.selected {
-            app.chosen_event.events.iter().nth(i).unwrap().desc()
+            format!(
+                "- {}",
+                app.chosen_event.events.iter().nth(i).unwrap().desc()
+            )
         } else {
             String::new()
         }
