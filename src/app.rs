@@ -1,6 +1,6 @@
 use crate::{
     ui,
-    widgets::{event_view::EventState, weeks::Weeks},
+    widgets::{event_view::EventViewState, weeks::Weeks},
 };
 use chrono::prelude::*;
 use crossterm::{
@@ -61,105 +61,108 @@ pub enum InputMode {
     Selecting,
 }
 
-pub struct App<'a> {
+pub(crate) struct App<'a> {
     pub title: &'a str,
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
     pub files: ConfigFiles,
-    pub calendar: Calendar,
     pub starting_date: Date<Local>,
     pub chosen_date: Date<Local>,
-    pub chosen_event: EventState,
+    pub chosen_event: EventViewState,
     pub add_event: bool,
     pub input_time: String,
     pub input_description: String,
     pub hint_text: String,
     pub input_mode: InputMode,
-    pub first_date: Option<Date<Local>>,
-    pub last_date: Option<Date<Local>>,
 }
 
 impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
         let files = ConfigFiles::new().unwrap();
-        let calendar = Calendar::new();
         let now = Local::now().date();
 
         App {
             title,
             should_quit: false,
+            add_event: false,
             tabs: TabsState::new(vec!["Calendar", "Todo"]),
             enhanced_graphics,
             files,
             starting_date: now,
             chosen_date: now,
-            chosen_event: EventState::new(None),
-            calendar,
-            add_event: false,
+            chosen_event: EventViewState::new(None, None),
             input_time: String::new(),
             input_description: String::new(),
             hint_text: String::new(),
             input_mode: InputMode::Normal,
-            first_date: None,
-            last_date: None,
         }
     }
 
     pub fn on_up(&mut self) {
-        self.chosen_date = self
-            .chosen_date
-            .checked_sub_signed(ChronoDuration::weeks(1))
-            .unwrap();
-        /*
-        if self.chosen_date.lt(&self.first_date.unwrap()) {
-            self.first_date = self.first_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
-            self.last_date = self.last_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
+        match self.input_mode {
+            InputMode::Normal => {
+                self.chosen_date = self
+                    .chosen_date
+                    .checked_sub_signed(ChronoDuration::weeks(1))
+                    .unwrap();
+            }
+            InputMode::Selecting => {
+                self.chosen_event.selected = if let Some(sel) = self.chosen_event.selected {
+                    Some(sel.saturating_sub(1))
+                } else {
+                    Some(0)
+                }
+            }
+            _ => {}
         }
-        self.input_time = self.last_date.unwrap().to_string();
-        */
     }
 
     pub fn on_left(&mut self) {
-        self.chosen_date = self
-            .chosen_date
-            .checked_sub_signed(ChronoDuration::days(1))
-            .unwrap();
-        /*
-        if self.chosen_date.lt(&self.first_date.unwrap()) {
-            self.first_date = self.first_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
-            self.last_date = self.last_date.unwrap().checked_sub_signed(ChronoDuration::weeks(1));
+        match self.input_mode {
+            InputMode::Normal => {
+                self.chosen_date = self
+                    .chosen_date
+                    .checked_sub_signed(ChronoDuration::days(1))
+                    .unwrap();
+            }
+            _ => {}
         }
-        self.input_time = self.last_date.unwrap().to_string();
-        */
     }
 
     pub fn on_down(&mut self) {
-        self.chosen_date = self
-            .chosen_date
-            .checked_add_signed(ChronoDuration::weeks(1))
-            .unwrap();
-        /*
-        if self.chosen_date.gt(&self.last_date.unwrap()) {
-            self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
-            self.last_date = self.last_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
+        match self.input_mode {
+            InputMode::Normal => {
+                self.chosen_date = self
+                    .chosen_date
+                    .checked_add_signed(ChronoDuration::weeks(1))
+                    .unwrap();
+            }
+            InputMode::Selecting => {
+                self.chosen_event.selected = if let Some(sel) = self.chosen_event.selected {
+                    if sel == self.files.events_list(self.chosen_date).len() - 1 {
+                        Some(sel)
+                    } else {
+                        Some(sel.saturating_add(1))
+                    }
+                } else {
+                    Some(0)
+                }
+            }
+            _ => {}
         }
-        self.input_time = self.last_date.unwrap().to_string();
-        */
     }
 
     pub fn on_right(&mut self) {
-        self.chosen_date = self
-            .chosen_date
-            .checked_add_signed(ChronoDuration::days(1))
-            .unwrap();
-        /*
-        if self.chosen_date.gt(&self.last_date.unwrap()) {
-            self.first_date = self.first_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
-            self.last_date = self.last_date.unwrap().checked_add_signed(ChronoDuration::weeks(1));
+        match self.input_mode {
+            InputMode::Normal => {
+                self.chosen_date = self
+                    .chosen_date
+                    .checked_add_signed(ChronoDuration::days(1))
+                    .unwrap();
+            }
+            _ => {}
         }
-        self.input_time = self.last_date.unwrap().to_string();
-        */
     }
 
     pub fn on_key(&mut self, c: char) {
@@ -183,7 +186,6 @@ impl<'a> App<'a> {
             }
             'a' => {
                 self.input_mode = InputMode::AddingTime;
-                //self.on_add_item();
             }
             _ => {}
         }
@@ -213,7 +215,8 @@ impl<'a> App<'a> {
 
     pub fn on_add_item(&mut self) {
         match self.tabs.index {
-            _ => {
+            0 => {
+                // s_e == start-end
                 let s_e: Vec<&str> = self.input_time.split('-').collect();
 
                 let s_h_m: Vec<&str> = s_e.get(0).unwrap().split(':').collect();
@@ -237,6 +240,7 @@ impl<'a> App<'a> {
                 self.input_description = String::new();
             }
             1 => self.files.add_todo("todo", "TODO").unwrap(),
+            _ => {}
         }
     }
 }
@@ -293,7 +297,10 @@ fn run_app<B: Backend>(
                         KeyCode::Up => app.on_up(),
                         KeyCode::Right => app.on_right(),
                         KeyCode::Down => app.on_down(),
-                        KeyCode::Enter => app.input_mode = InputMode::Selecting,
+                        KeyCode::Enter => {
+                            app.input_mode = InputMode::Selecting;
+                            app.chosen_event = EventViewState::new(Some(0), None);
+                        }
                         _ => {}
                     },
                     InputMode::AddingTime => match key.code {
@@ -331,7 +338,14 @@ fn run_app<B: Backend>(
                     },
                     InputMode::Selecting => match key.code {
                         KeyCode::Char(c) => app.event_on_key(c),
-                        KeyCode::Esc => app.input_mode = InputMode::Normal,
+                        KeyCode::Left => app.on_left(),
+                        KeyCode::Up => app.on_up(),
+                        KeyCode::Right => app.on_right(),
+                        KeyCode::Down => app.on_down(),
+                        KeyCode::Esc => {
+                            app.input_mode = InputMode::Normal;
+                            app.chosen_event = EventViewState::new(None, None);
+                        }
                         _ => {}
                     },
                 }

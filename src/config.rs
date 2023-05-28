@@ -168,7 +168,7 @@ impl ConfigFiles {
                 )
             })
             .filter(|e| e.time().start_date() == date)
-            .collect()
+            .collect::<Vec<Event>>()
     }
 
     pub fn get_todo(&mut self, key: &str, value: &str) -> Result<()> {

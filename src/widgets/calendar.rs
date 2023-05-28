@@ -21,8 +21,7 @@ pub struct CalendarWidget<'a> {
     block: Option<Block<'a>>,
     highlight_style: Style,
     highlight_symbol: Option<&'a str>,
-    //days: Vec<Date<Local>>,
-    pub content: Text<'a>,
+    content: Text<'a>,
 }
 
 impl<'a> CalendarWidget<'a> {
@@ -82,7 +81,6 @@ impl<'a> StatefulWidget for CalendarWidget<'a> {
 
         let (mut x, mut y) = (block_area.left(), block_area.top());
 
-        //println!("{}", self.content.lines.len());
         for spans in self.content.into_iter() {
             buf.set_spans(x, y, &spans, block_area.width);
             y += 1;

@@ -4,7 +4,7 @@ use crate::{
     app::{App, InputMode},
     widgets::{
         calendar::CalendarWidget,
-        event_view::EventView,
+        event_view::{EventView, EventViewState},
         grid::Grid,
         popup::{self, centered_rect, PopupAdd},
         time_grid::TimeGrid,
@@ -32,7 +32,7 @@ use pickledb::PickleDbIteratorItem;
 
 use crate::event::Event;
 
-pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+pub(crate) fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
         .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
         .split(f.size());
@@ -47,6 +47,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .highlight_style(Style::default().fg(Color::Yellow))
         .select(app.tabs.index);
     f.render_widget(tabs, chunks[0]);
+
     match app.tabs.index {
         0 => draw_first_tab(f, app, chunks[1]),
         1 => draw_second_tab(f, app, chunks[1]),
@@ -84,25 +85,21 @@ where
                 .bg(app.files.config.color)
                 .add_modifier(Modifier::BOLD),
         );
-    let weeks_text = calendar.content.clone();
     f.render_stateful_widget(calendar, chunks[0], &mut app.chosen_date);
 
-    let date = Local.ymd(
-        app.chosen_date.year(),
-        app.chosen_date.month(),
-        app.chosen_date.day(),
-    );
+    let date = app.chosen_date.clone();
 
-    let ev = EventView::new(
+    let mut ev = EventView::new(
         app.files.events_list(date),
         &app.input_mode,
         app.enhanced_graphics,
     )
     .block(Block::default().borders(Borders::ALL).title(format!(
-        "{} {} {}",
+        "{} {} {} {:?}",
         date.day(),
         Month::from_u32(date.month()).unwrap().name(),
         date.year(),
+        app.chosen_event.selected
     )))
     .style(match app.input_mode {
         InputMode::Selecting => Style::default().fg(Color::Yellow),

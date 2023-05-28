@@ -15,23 +15,28 @@ use crate::{app::InputMode, event::Event};
 
 use super::{event_slot::EventSlot, time_grid::TimeGrid};
 
-pub struct EventState {
-    selected: Option<usize>,
+pub(crate) struct EventViewState {
+    pub selected: Option<usize>,
+    pub events_len: Option<usize>,
 }
 
-impl EventState {
-    pub fn new(selected: Option<usize>) -> Self {
-        EventState { selected }
+impl EventViewState {
+    pub fn new(selected: Option<usize>, events_len: Option<usize>) -> Self {
+        EventViewState {
+            selected,
+            events_len,
+        }
     }
 }
 
-pub struct EventView<'a> {
+pub(crate) struct EventView<'a> {
     events: Vec<Event>,
     style: Style,
     block: Option<Block<'a>>,
     highlight_style: Style,
     highlight_symbol: Option<&'a str>,
     enhanced: bool,
+    selected: Option<usize>,
 }
 
 impl<'a> EventView<'a> {
@@ -43,6 +48,7 @@ impl<'a> EventView<'a> {
             highlight_symbol: None,
             highlight_style: Style::default(),
             enhanced: enhanced_graphics,
+            selected: None,
         }
     }
 
@@ -68,7 +74,7 @@ impl<'a> EventView<'a> {
 }
 
 impl<'a> StatefulWidget for EventView<'a> {
-    type State = EventState;
+    type State = EventViewState;
 
     fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         /*
@@ -93,12 +99,14 @@ impl<'a> StatefulWidget for EventView<'a> {
         let tg = TimeGrid::new(self.enhanced).style(Style::default().fg(Color::Red));
         tg.render(block_area, buf);
 
-        if self.events.is_empty() {
-            return;
-        }
-
         for (i, event) in self.events.iter().enumerate() {
-            let slot = EventSlot::new(event, Style::default().fg(Color::Blue));
+            let style = if state.selected.is_some() && state.selected.unwrap() == i {
+                Style::default().fg(Color::Red)
+            } else {
+                Style::default().fg(Color::Blue)
+            };
+
+            let slot = EventSlot::new(event, style);
             slot.render(block_area, buf);
         }
     }
