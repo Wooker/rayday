@@ -15,17 +15,19 @@ use crate::{app::InputMode, event::Event};
 
 use super::{event_slot::EventSlot, time_grid::TimeGrid};
 
+#[derive(Debug)]
 pub(crate) struct EventViewState {
     pub selected: Option<usize>,
-    pub events_len: Option<usize>,
+    pub events: Vec<Event>,
 }
 
 impl EventViewState {
-    pub fn new(selected: Option<usize>, events_len: Option<usize>) -> Self {
-        EventViewState {
-            selected,
-            events_len,
-        }
+    pub fn new(selected: Option<usize>, events: Vec<Event>) -> Self {
+        EventViewState { selected, events }
+    }
+
+    pub fn select(&mut self, index: Option<usize>) {
+        self.selected = index;
     }
 }
 
@@ -36,11 +38,11 @@ pub(crate) struct EventView<'a> {
     highlight_style: Style,
     highlight_symbol: Option<&'a str>,
     enhanced: bool,
-    selected: Option<usize>,
 }
 
 impl<'a> EventView<'a> {
     pub fn new(events: Vec<Event>, input_mode: &InputMode, enhanced_graphics: bool) -> Self {
+        let events_len = events.len();
         EventView {
             events,
             block: None,
@@ -48,7 +50,6 @@ impl<'a> EventView<'a> {
             highlight_symbol: None,
             highlight_style: Style::default(),
             enhanced: enhanced_graphics,
-            selected: None,
         }
     }
 

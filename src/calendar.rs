@@ -66,11 +66,3 @@ impl Calendar {
         self.date
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn from_today() {}
-}

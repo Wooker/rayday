@@ -116,12 +116,3 @@ impl<'a> Weeks<'a> {
         self.content
     }
 }
-
-#[cfg(tests)]
-mod tests {
-    use super::*;
-    const HEIGHT: u16 = 57;
-
-    #[test]
-    fn a() {}
-}

@@ -112,7 +112,7 @@ impl Today for EventTime {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Event {
     time: EventTime,
     description: String,
@@ -136,12 +136,39 @@ impl Event {
     }
 }
 
+impl PartialOrd for Event {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        if self.time.start < other.time.start {
+            Some(std::cmp::Ordering::Less)
+        } else if self.time.start == other.time.start && self.time.end < other.time.end {
+            Some(std::cmp::Ordering::Less)
+        } else {
+            Some(std::cmp::Ordering::Greater)
+        }
+    }
+}
+
+impl Ord for Event {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        if self.time.start.cmp(&other.time.start) == std::cmp::Ordering::Equal {
+            // println!("Start the same");
+            if self.time.end.cmp(&other.time.end) == std::cmp::Ordering::Equal {
+                std::cmp::Ordering::Less
+            } else {
+                self.time.end.cmp(&other.time.end)
+            }
+        } else {
+            self.time.start.cmp(&other.time.start)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn normal_ordering() {
+    fn event_time_constructor_normal_time_ordering() {
         let start = Local.ymd(2022, 4, 27).and_hms(12, 0, 0);
         let end = Local.ymd(2022, 5, 27).and_hms(12, 30, 0);
 
@@ -150,16 +177,16 @@ mod tests {
     }
 
     #[test]
-    fn end_before_start() {
+    fn event_time_constructor_end_before_start() {
         let start = Local.ymd(2022, 4, 5).and_hms(12, 0, 0);
         let end = Local.ymd(2022, 4, 5).and_hms(10, 0, 0);
 
         let e = EventTime::new(start, end);
-        assert_eq!(e.is_err(), true);
+        assert!(e.is_err());
     }
 
     #[test]
-    fn time_from_str() {
+    fn event_time_parsing() {
         let time = EventTime::new(
             Local.ymd(2022, 1, 1).and_hms(0, 0, 0),
             Local.ymd(2022, 1, 1).and_hms(1, 0, 0),

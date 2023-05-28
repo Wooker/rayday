@@ -90,16 +90,20 @@ where
     let date = app.chosen_date.clone();
 
     let mut ev = EventView::new(
-        app.files.events_list(date),
+        app.files.get_events_on_date(date),
         &app.input_mode,
         app.enhanced_graphics,
     )
     .block(Block::default().borders(Borders::ALL).title(format!(
-        "{} {} {} {:?}",
-        date.day(),
+        "{} {} {} - {}",
+        app.chosen_date.day(),
         Month::from_u32(date.month()).unwrap().name(),
-        date.year(),
-        app.chosen_event.selected
+        app.chosen_date.year(),
+        if let Some(i) = app.chosen_event.selected {
+            app.chosen_event.events.iter().nth(i).unwrap().desc()
+        } else {
+            String::new()
+        }
     )))
     .style(match app.input_mode {
         InputMode::Selecting => Style::default().fg(Color::Yellow),

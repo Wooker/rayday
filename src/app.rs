@@ -81,6 +81,7 @@ impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
         let files = ConfigFiles::new().unwrap();
         let now = Local::now().date();
+        let events = files.get_events_on_date(now);
 
         App {
             title,
@@ -91,7 +92,7 @@ impl<'a> App<'a> {
             files,
             starting_date: now,
             chosen_date: now,
-            chosen_event: EventViewState::new(None, None),
+            chosen_event: EventViewState::new(None, events),
             input_time: String::new(),
             input_description: String::new(),
             hint_text: String::new(),
@@ -140,7 +141,7 @@ impl<'a> App<'a> {
             }
             InputMode::Selecting => {
                 self.chosen_event.selected = if let Some(sel) = self.chosen_event.selected {
-                    if sel == self.files.events_list(self.chosen_date).len() - 1 {
+                    if sel == self.files.get_events_on_date(self.chosen_date).len() - 1 {
                         Some(sel)
                     } else {
                         Some(sel.saturating_add(1))
@@ -207,8 +208,12 @@ impl<'a> App<'a> {
 
     pub fn event_on_key(&mut self, c: char) {
         match c {
-            'j' => {}
-            'k' => {}
+            'k' => self.on_up(),
+            'j' => self.on_down(),
+            'q' => {
+                self.input_mode = InputMode::Normal;
+                self.chosen_event.select(None);
+            }
             _ => {}
         }
     }
@@ -299,7 +304,7 @@ fn run_app<B: Backend>(
                         KeyCode::Down => app.on_down(),
                         KeyCode::Enter => {
                             app.input_mode = InputMode::Selecting;
-                            app.chosen_event = EventViewState::new(Some(0), None);
+                            app.chosen_event.select(Some(0));
                         }
                         _ => {}
                     },
@@ -344,7 +349,7 @@ fn run_app<B: Backend>(
                         KeyCode::Down => app.on_down(),
                         KeyCode::Esc => {
                             app.input_mode = InputMode::Normal;
-                            app.chosen_event = EventViewState::new(None, None);
+                            app.chosen_event.select(None);
                         }
                         _ => {}
                     },

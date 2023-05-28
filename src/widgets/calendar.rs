@@ -87,9 +87,3 @@ impl<'a> StatefulWidget for CalendarWidget<'a> {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::calendar::Calendar;
-}
