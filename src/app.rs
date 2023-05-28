@@ -251,6 +251,8 @@ impl<'a> App<'a> {
 
                 self.input_time = String::new();
                 self.input_description = String::new();
+                self.chosen_event =
+                    EventViewState::new(None, self.files.get_events_on_date(self.chosen_date));
             }
             1 => self.files.add_todo("todo", "TODO").unwrap(),
             _ => {}
