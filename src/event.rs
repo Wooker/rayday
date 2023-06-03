@@ -3,7 +3,7 @@ use chrono::{prelude::*, Duration};
 use serde::{Deserialize, Serialize};
 use std::{borrow::Borrow, cmp, fmt};
 
-const PARSE_TIME: &str = "%Y-%m-%d %H:%M:%S %:z";
+const PARSE_TIME: &str = "%H:%M:%S";
 
 enum Periodicity {
     Daily,
@@ -19,18 +19,19 @@ pub trait Today {
 
 #[derive(Debug)]
 pub enum EventTimeError {
+    IncorrectTime,
     EndBeforeStart,
     Unknown,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub struct EventTime {
-    start: DateTime<Local>,
-    end: DateTime<Local>,
+    start: NaiveTime,
+    end: NaiveTime,
 }
 
 impl EventTime {
-    pub fn new(start: DateTime<Local>, end: DateTime<Local>) -> Result<EventTime, EventTimeError> {
+    pub fn new(start: NaiveTime, end: NaiveTime) -> Result<EventTime, EventTimeError> {
         match start.cmp(&end) {
             cmp::Ordering::Greater => Err(EventTimeError::EndBeforeStart),
             cmp::Ordering::Less => Ok(EventTime { start, end }),
@@ -39,12 +40,12 @@ impl EventTime {
     }
 
     pub fn new_md(
-        date: Date<Local>,
+        date: NaiveDate, //Date<Local>,
         start: (u32, u32),
         end: (u32, u32),
     ) -> Result<EventTime, EventTimeError> {
-        let start = date.and_hms(start.0, start.1, 0);
-        let end = date.and_hms(end.0, end.1, 0);
+        let start = NaiveTime::from_hms_opt(start.0, start.1, 0).unwrap();
+        let end = NaiveTime::from_hms_opt(end.0, end.1, 0).unwrap();
 
         match start.cmp(&end) {
             cmp::Ordering::Greater => Err(EventTimeError::EndBeforeStart),
@@ -53,20 +54,12 @@ impl EventTime {
         }
     }
 
-    pub fn start_date(&self) -> Date<Local> {
-        self.start.date()
+    pub fn start_datetime(&self) -> NaiveTime {
+        self.start
     }
 
-    pub fn start_datetime(&self) -> DateTime<Local> {
-        self.start.with_timezone(&Local)
-    }
-
-    pub fn end_date(&self) -> Date<Local> {
-        self.end.date()
-    }
-
-    pub fn end_datetime(&self) -> DateTime<Local> {
-        self.end.with_timezone(&Local)
+    pub fn end_datetime(&self) -> NaiveTime {
+        self.end
     }
 
     pub fn to_string(&self) -> String {
@@ -81,8 +74,8 @@ impl From<&str> for EventTime {
         let start: &str = v.pop().unwrap();
 
         EventTime {
-            start: Local.datetime_from_str(start, PARSE_TIME).unwrap(),
-            end: Local.datetime_from_str(end, PARSE_TIME).unwrap(),
+            start: NaiveTime::parse_from_str(start, PARSE_TIME).unwrap(),
+            end: NaiveTime::parse_from_str(end, PARSE_TIME).unwrap(),
         }
     }
 }
@@ -97,30 +90,35 @@ impl Today for EventTime {
     // duration in minutes
     fn today(hours: u32, minutes: u32, d: Duration) -> EventTime {
         let today = Local::today().and_hms(hours, minutes, 0);
-        EventTime {
-            start: today,
-            end: today.checked_add_signed(d).unwrap(),
-        }
+
+        let start = NaiveTime::from_hms_opt(hours, minutes, 0).unwrap();
+        let (end, seconds) = start.overflowing_add_signed(d);
+        EventTime { start, end }
     }
 
     fn now(d: Duration) -> EventTime {
         let now = Local::now().with_nanosecond(0).unwrap();
-        EventTime {
-            start: now,
-            end: now.checked_add_signed(d).unwrap(),
-        }
+        let start = NaiveTime::from_hms_opt(now.hour(), now.minute(), now.second()).unwrap();
+        let (end, seconds) = start.overflowing_add_signed(d);
+
+        EventTime { start, end }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Event {
+    date: NaiveDate,
     time: EventTime,
     description: String,
 }
 
 impl Event {
-    pub fn new(time: EventTime, description: String) -> Event {
-        Event { time, description }
+    pub fn new(date: NaiveDate, time: EventTime, description: String) -> Event {
+        Event {
+            date,
+            time,
+            description,
+        }
     }
 
     pub fn time(&self) -> EventTime {
@@ -129,6 +127,10 @@ impl Event {
 
     pub fn desc(&self) -> String {
         self.description.to_string()
+    }
+
+    pub fn date(&self) -> NaiveDate {
+        self.date
     }
 
     pub fn to_string(&self) -> String {
@@ -169,8 +171,8 @@ mod tests {
 
     #[test]
     fn event_time_constructor_normal_time_ordering() {
-        let start = Local.ymd(2022, 4, 27).and_hms(12, 0, 0);
-        let end = Local.ymd(2022, 5, 27).and_hms(12, 30, 0);
+        let start = NaiveTime::from_hms_opt(12, 0, 0).unwrap();
+        let end = NaiveTime::from_hms_opt(12, 30, 0).unwrap();
 
         let e = EventTime::new(start, end);
         assert!(e.is_ok());
@@ -178,8 +180,8 @@ mod tests {
 
     #[test]
     fn event_time_constructor_end_before_start() {
-        let start = Local.ymd(2022, 4, 5).and_hms(12, 0, 0);
-        let end = Local.ymd(2022, 4, 5).and_hms(10, 0, 0);
+        let start = NaiveTime::from_hms_opt(12, 0, 0).unwrap();
+        let end = NaiveTime::from_hms_opt(10, 0, 0).unwrap();
 
         let e = EventTime::new(start, end);
         assert!(e.is_err());
@@ -188,14 +190,11 @@ mod tests {
     #[test]
     fn event_time_parsing() {
         let time = EventTime::new(
-            Local.ymd(2022, 1, 1).and_hms(0, 0, 0),
-            Local.ymd(2022, 1, 1).and_hms(1, 0, 0),
+            NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            NaiveTime::from_hms_opt(1, 0, 0).unwrap(),
         )
         .unwrap();
 
-        assert_eq!(
-            EventTime::from("2022-01-01 00:00:00 +06:00|2022-01-01 01:00:00 +06:00"),
-            time
-        );
+        assert_eq!(EventTime::from("00:00:00|01:00:00"), time);
     }
 }

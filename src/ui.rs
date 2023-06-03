@@ -37,7 +37,7 @@ pub(crate) fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
         .split(f.size());
     let titles = app
-        .tabs
+        .state_tabs
         .titles
         .iter()
         .map(|t| Spans::from(Span::styled(*t, Style::default().fg(Color::Gray))))
@@ -45,10 +45,10 @@ pub(crate) fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let tabs = Tabs::new(titles)
         .block(Block::default().borders(Borders::ALL).title(app.title))
         .highlight_style(Style::default().fg(Color::Yellow))
-        .select(app.tabs.index);
+        .select(app.state_tabs.index);
     f.render_widget(tabs, chunks[0]);
 
-    match app.tabs.index {
+    match app.state_tabs.index {
         0 => draw_first_tab(f, app, chunks[1]),
         1 => draw_second_tab(f, app, chunks[1]),
         _ => {}
@@ -69,8 +69,12 @@ where
     let info_style = Style::default().fg(Color::Blue);
 
     let height_without_borders = chunks[0].height - 2;
-    let weeks = Weeks::new(app.chosen_date, height_without_borders, chunks[0].width);
-    let mut calendar = CalendarWidget::new(weeks, app.chosen_date, &app.input_mode)
+    let weeks = Weeks::new(
+        app.state_calendar.get_selected_date(),
+        height_without_borders,
+        chunks[0].width,
+    );
+    let mut calendar = CalendarWidget::new(weeks, &app.input_mode)
         .block(
             Block::default()
                 .borders(Borders::ALL)
@@ -85,22 +89,25 @@ where
                 .bg(app.files.config.color)
                 .add_modifier(Modifier::BOLD),
         );
-    f.render_stateful_widget(calendar, chunks[0], &mut app.chosen_date);
+    f.render_stateful_widget(calendar, chunks[0], &mut app.state_calendar);
+
+    let selected_date = app.state_calendar.get_selected_date();
 
     let mut ev = EventView::new(
-        app.files.get_events_on_date(app.chosen_date),
+        app.files
+            .get_events_on_date(app.state_calendar.get_selected_date()),
         &app.input_mode,
         app.enhanced_graphics,
     )
     .block(Block::default().borders(Borders::ALL).title(format!(
-        "{} {} {} {}",
-        app.chosen_date.day(),
-        Month::from_u32(app.chosen_date.month()).unwrap().name(),
-        app.chosen_date.year(),
-        if let Some(i) = app.chosen_event.selected {
+        "{} {} {}{}",
+        selected_date.day(),
+        Month::from_u32(selected_date.month()).unwrap().name(),
+        selected_date.year(),
+        if let Some(i) = app.state_events.selected {
             format!(
-                "- {}",
-                app.chosen_event.events.iter().nth(i).unwrap().desc()
+                " - {}",
+                app.state_events.events.iter().nth(i).unwrap().desc()
             )
         } else {
             String::new()
@@ -111,7 +118,7 @@ where
         _ => Style::default(),
     })
     .highlight_style(Style::default().add_modifier(Modifier::BOLD));
-    f.render_stateful_widget(ev, chunks[1], &mut app.chosen_event);
+    f.render_stateful_widget(ev, chunks[1], &mut app.state_events);
 
     let popup = PopupAdd::new(&app.input_time, &app.input_description, &app.input_mode).block(
         Block::default()

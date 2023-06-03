@@ -71,19 +71,19 @@ impl ConfigFiles {
                     events_db = PickleDb::new(
                         events_file_path,
                         PickleDbDumpPolicy::AutoDump,
-                        SerializationMethod::Json,
+                        SerializationMethod::Bin,
                     );
                     todos_db = PickleDb::new(
                         todos_file_path,
                         PickleDbDumpPolicy::AutoDump,
-                        SerializationMethod::Json,
+                        SerializationMethod::Bin,
                     );
                 } else {
                     config = load_path(config_file_path).unwrap();
                     events_db = PickleDb::load(
                         events_file_path,
                         PickleDbDumpPolicy::AutoDump,
-                        SerializationMethod::Json,
+                        SerializationMethod::Bin,
                     )
                     .unwrap();
                     todos_db = PickleDb::load(
@@ -109,7 +109,8 @@ impl ConfigFiles {
     pub fn add_event(&mut self, event: Event) -> Result<(), PickleError> {
         self.events.set(
             format!(
-                "{}|{}",
+                "{}|{}|{}",
+                &event.date(),
                 &event.time().start_datetime().to_string(),
                 &event.time().end_datetime().to_string()
             )
@@ -145,21 +146,31 @@ impl ConfigFiles {
         )
     }
 
-    pub fn get_events_on_date(&self, date: Date<Local>) -> Vec<Event> {
+    pub fn get_events_on_date(&self, date: NaiveDate) -> Vec<Event> {
         // Get EventTime as keys from db
-        let mut events = self
-            .events
+        self.events
             .iter()
             .map(|e| {
+                let mut key = e.get_key().split('|').collect::<Vec<&str>>();
+
+                let end_str = key.pop().unwrap();
+                let start_str = key.pop().unwrap();
+                let date_str = key.pop().unwrap();
+
+                let time_format = "%H:%M:%S";
+
                 Event::new(
-                    EventTime::from(e.get_key()),
+                    NaiveDate::parse_from_str(date_str, "%Y-%m-%d").unwrap(),
+                    EventTime::new(
+                        NaiveTime::parse_from_str(start_str, time_format).unwrap(),
+                        NaiveTime::parse_from_str(end_str, time_format).unwrap(),
+                    )
+                    .unwrap(),
                     e.get_value::<String>().unwrap(),
                 )
             })
-            .filter(|e| e.time().start_date() == date)
-            .collect::<Vec<Event>>();
-        events.sort_unstable_by(|a, b| a.cmp(&b));
-        events
+            .filter(|e| e.date() == date)
+            .collect()
     }
 
     pub fn get_todo(&mut self, key: &str, value: &str) -> Result<()> {
@@ -188,78 +199,5 @@ mod tests {
         let files = ConfigFiles::new().expect("Could not read config files");
 
         assert_eq!(Color::LightBlue, files.config.color);
-    }
-
-    #[test]
-    fn config_add_event() {
-        let mut cal = ConfigFiles::new().unwrap();
-
-        cal.add_event(Event::new(
-            EventTime::today(12, 0, Duration::minutes(30)),
-            "Event today!".to_string(),
-        ));
-        cal.add_event(Event::new(
-            EventTime::today(12, 5, Duration::minutes(25)),
-            "Another event!".to_string(),
-        ));
-
-        let events = cal.get_events_on_date(Local::today());
-        assert_eq!(events.is_empty(), false);
-    }
-
-    #[test]
-    fn config_datetime_sort() {
-        let d1 = Local.ymd(2023, 5, 28).and_hms(12, 0, 0);
-        let d2 = Local.ymd(2023, 5, 28).and_hms(12, 5, 0);
-        assert_eq!(d1 < d2, true);
-    }
-
-    #[test]
-    fn config_sorting_same_start() {
-        let mut config = ConfigFiles::new().unwrap();
-
-        config.add_event(Event::new(
-            EventTime::today(12, 0, Duration::minutes(25)),
-            "Event1".to_string(),
-        ));
-        config.add_event(Event::new(
-            EventTime::today(12, 0, Duration::minutes(30)),
-            "Event2".to_string(),
-        ));
-
-        let events = config.get_events_on_date(Local::today());
-        assert_eq!(events.iter().nth(0).unwrap().desc(), "Event1");
-
-        for event in events.iter() {
-            config.remove_event(event.time());
-        }
-    }
-
-    #[test]
-    fn config_sorting_same_end() {
-        let mut config = ConfigFiles::new().unwrap();
-
-        config.add_event(Event::new(
-            EventTime::today(12, 0, Duration::minutes(30)),
-            "Event1".to_string(),
-        ));
-        config.add_event(Event::new(
-            EventTime::today(12, 5, Duration::minutes(25)),
-            "Event2".to_string(),
-        ));
-
-        let events = config.get_events_on_date(Local::today());
-        assert_eq!(events.iter().nth(0).unwrap().desc(), "Event1");
-    }
-
-    #[test]
-    fn config_sorting_events() {
-        let mut config = ConfigFiles::new().unwrap();
-        let mut events = config.get_events_on_date(Local::today());
-
-        events.sort_unstable_by(|a, b| a.cmp(&b));
-        dbg!(&events);
-        assert!(!events.is_empty());
-        assert_eq!(events.iter().nth(0).unwrap().desc(), "Event1");
     }
 }

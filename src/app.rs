@@ -1,6 +1,6 @@
 use crate::{
     ui,
-    widgets::{event_view::EventViewState, weeks::Weeks},
+    widgets::{calendar::CalendarState, event_view::EventViewState, weeks::Weeks},
 };
 use chrono::prelude::*;
 use crossterm::{
@@ -64,12 +64,12 @@ pub enum InputMode {
 pub(crate) struct App<'a> {
     pub title: &'a str,
     pub should_quit: bool,
-    pub tabs: TabsState<'a>,
+    pub state_tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
     pub files: ConfigFiles,
-    pub starting_date: Date<Local>,
-    pub chosen_date: Date<Local>,
-    pub chosen_event: EventViewState,
+    pub starting_date: NaiveDate,      //Date<Local>,
+    pub state_calendar: CalendarState, //Date<Local>,
+    pub state_events: EventViewState,
     pub add_event: bool,
     pub input_time: String,
     pub input_description: String,
@@ -80,19 +80,19 @@ pub(crate) struct App<'a> {
 impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
         let files = ConfigFiles::new().unwrap();
-        let now = Local::now().date();
+        let now = Local::now().naive_local().date();
         let events = files.get_events_on_date(now);
 
         App {
             title,
             should_quit: false,
             add_event: false,
-            tabs: TabsState::new(vec!["Calendar", "Todo"]),
+            state_tabs: TabsState::new(vec!["Calendar", "Todo"]),
             enhanced_graphics,
             files,
             starting_date: now,
-            chosen_date: now,
-            chosen_event: EventViewState::new(None, events),
+            state_calendar: CalendarState::new(now),
+            state_events: EventViewState::new(None, events),
             input_time: String::new(),
             input_description: String::new(),
             hint_text: String::new(),
@@ -103,15 +103,20 @@ impl<'a> App<'a> {
     pub fn on_up(&mut self) {
         match self.input_mode {
             InputMode::Normal => {
-                self.chosen_date = self
-                    .chosen_date
-                    .checked_sub_signed(ChronoDuration::weeks(1))
-                    .unwrap();
-                self.chosen_event =
-                    EventViewState::new(None, self.files.get_events_on_date(self.chosen_date));
+                self.state_calendar = CalendarState::new(
+                    self.state_calendar
+                        .get_selected_date()
+                        .checked_sub_signed(ChronoDuration::weeks(1))
+                        .unwrap(),
+                );
+                self.state_events = EventViewState::new(
+                    None,
+                    self.files
+                        .get_events_on_date(self.state_calendar.get_selected_date()),
+                );
             }
             InputMode::Selecting => {
-                self.chosen_event.selected = if let Some(sel) = self.chosen_event.selected {
+                self.state_events.selected = if let Some(sel) = self.state_events.selected {
                     Some(sel.saturating_sub(1))
                 } else {
                     Some(0)
@@ -124,30 +129,40 @@ impl<'a> App<'a> {
     pub fn on_left(&mut self) {
         match self.input_mode {
             InputMode::Normal => {
-                self.chosen_date = self
-                    .chosen_date
-                    .checked_sub_signed(ChronoDuration::days(1))
-                    .unwrap();
-                self.chosen_event =
-                    EventViewState::new(None, self.files.get_events_on_date(self.chosen_date));
+                self.state_calendar = CalendarState::new(
+                    self.state_calendar
+                        .get_selected_date()
+                        .checked_sub_signed(ChronoDuration::days(1))
+                        .unwrap(),
+                );
+                self.state_events = EventViewState::new(
+                    None,
+                    self.files
+                        .get_events_on_date(self.state_calendar.get_selected_date()),
+                );
             }
             _ => {}
         }
     }
 
     pub fn on_down(&mut self) {
+        let events = self
+            .files
+            .get_events_on_date(self.state_calendar.get_selected_date());
+
         match self.input_mode {
             InputMode::Normal => {
-                self.chosen_date = self
-                    .chosen_date
-                    .checked_add_signed(ChronoDuration::weeks(1))
-                    .unwrap();
-                self.chosen_event =
-                    EventViewState::new(None, self.files.get_events_on_date(self.chosen_date));
+                self.state_calendar = CalendarState::new(
+                    self.state_calendar
+                        .get_selected_date()
+                        .checked_add_signed(ChronoDuration::weeks(1))
+                        .unwrap(),
+                );
+                self.state_events = EventViewState::new(None, events);
             }
             InputMode::Selecting => {
-                self.chosen_event.selected = if let Some(sel) = self.chosen_event.selected {
-                    if sel == self.files.get_events_on_date(self.chosen_date).len() - 1 {
+                self.state_events.selected = if let Some(sel) = self.state_events.selected {
+                    if sel == events.len() - 1 {
                         Some(sel)
                     } else {
                         Some(sel.saturating_add(1))
@@ -163,12 +178,17 @@ impl<'a> App<'a> {
     pub fn on_right(&mut self) {
         match self.input_mode {
             InputMode::Normal => {
-                self.chosen_date = self
-                    .chosen_date
-                    .checked_add_signed(ChronoDuration::days(1))
-                    .unwrap();
-                self.chosen_event =
-                    EventViewState::new(None, self.files.get_events_on_date(self.chosen_date));
+                self.state_calendar = CalendarState::new(
+                    self.state_calendar
+                        .get_selected_date()
+                        .checked_add_signed(ChronoDuration::days(1))
+                        .unwrap(),
+                );
+                self.state_events = EventViewState::new(
+                    None,
+                    self.files
+                        .get_events_on_date(self.state_calendar.get_selected_date()),
+                );
             }
             _ => {}
         }
@@ -220,14 +240,14 @@ impl<'a> App<'a> {
             'j' => self.on_down(),
             'q' => {
                 self.input_mode = InputMode::Normal;
-                self.chosen_event.select(None);
+                self.state_events.select(None);
             }
             _ => {}
         }
     }
 
     pub fn on_add_item(&mut self) {
-        match self.tabs.index {
+        match self.state_tabs.index {
             0 => {
                 // s_e == start-end
                 let s_e: Vec<&str> = self.input_time.split('-').collect();
@@ -239,8 +259,9 @@ impl<'a> App<'a> {
                 let (e_h, e_m) = (e_h_m.get(0).unwrap(), e_h_m.get(1).unwrap());
 
                 let event = CalEvent::new(
+                    self.state_calendar.get_selected_date(),
                     CalEventTime::new_md(
-                        self.chosen_date,
+                        self.state_calendar.get_selected_date(),
                         (s_h.parse::<u32>().unwrap(), s_m.parse::<u32>().unwrap()),
                         (e_h.parse::<u32>().unwrap(), e_m.parse::<u32>().unwrap()),
                     )
@@ -251,8 +272,11 @@ impl<'a> App<'a> {
 
                 self.input_time = String::new();
                 self.input_description = String::new();
-                self.chosen_event =
-                    EventViewState::new(None, self.files.get_events_on_date(self.chosen_date));
+                self.state_events = EventViewState::new(
+                    None,
+                    self.files
+                        .get_events_on_date(self.state_calendar.get_selected_date()),
+                );
             }
             1 => self.files.add_todo("todo", "TODO").unwrap(),
             _ => {}
@@ -313,8 +337,10 @@ fn run_app<B: Backend>(
                         KeyCode::Right => app.on_right(),
                         KeyCode::Down => app.on_down(),
                         KeyCode::Enter => {
-                            app.input_mode = InputMode::Selecting;
-                            app.chosen_event.select(Some(0));
+                            if app.state_events.events.len() > 0 {
+                                app.input_mode = InputMode::Selecting;
+                                app.state_events.select(Some(0));
+                            }
                         }
                         _ => {}
                     },
@@ -359,7 +385,7 @@ fn run_app<B: Backend>(
                         KeyCode::Down => app.on_down(),
                         KeyCode::Esc => {
                             app.input_mode = InputMode::Normal;
-                            app.chosen_event.select(None);
+                            app.state_events.select(None);
                         }
                         _ => {}
                     },

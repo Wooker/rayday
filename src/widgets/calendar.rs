@@ -1,4 +1,4 @@
-use chrono::{Date, Datelike, Duration, Local, Month, Weekday};
+use chrono::{Date, Datelike, Duration, Local, Month, NaiveDate, Weekday};
 use num_traits::cast::FromPrimitive;
 use tui::{
     buffer::Buffer,
@@ -14,8 +14,21 @@ use crate::{app::InputMode, widgets::weeks::Weeks};
 const DAY_WIDTH: u8 = 2;
 
 #[derive(Debug)]
+pub struct CalendarState {
+    selected_date: NaiveDate,
+}
+
+impl CalendarState {
+    pub fn new(selected_date: NaiveDate) -> Self {
+        Self { selected_date }
+    }
+    pub fn get_selected_date(&self) -> NaiveDate {
+        self.selected_date
+    }
+}
+
+#[derive(Debug)]
 pub struct CalendarWidget<'a> {
-    selected: Date<Local>,
     today: Date<Local>,
     style: Style,
     block: Option<Block<'a>>,
@@ -25,11 +38,10 @@ pub struct CalendarWidget<'a> {
 }
 
 impl<'a> CalendarWidget<'a> {
-    pub fn new(weeks: Weeks<'a>, selected: Date<Local>, input_mode: &InputMode) -> Self {
+    pub fn new(weeks: Weeks<'a>, input_mode: &InputMode) -> Self {
         let today = Local::now().date();
 
         CalendarWidget {
-            selected,
             today,
             style: Style::default(),
             block: None,
@@ -37,10 +49,6 @@ impl<'a> CalendarWidget<'a> {
             highlight_symbol: None,
             content: weeks.content(),
         }
-    }
-
-    pub fn get_date(&self) -> Date<Local> {
-        self.selected
     }
 
     pub fn block(mut self, block: Block<'a>) -> CalendarWidget<'a> {
@@ -65,7 +73,7 @@ impl<'a> CalendarWidget<'a> {
 }
 
 impl<'a> StatefulWidget for CalendarWidget<'a> {
-    type State = Date<Local>;
+    type State = CalendarState; //Date<Local>;
 
     fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         buf.set_style(area, self.style);

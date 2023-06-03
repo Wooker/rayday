@@ -1,6 +1,6 @@
 use std::ops::Div;
 
-use chrono::{Date, Datelike, Duration, Local, Month, Weekday};
+use chrono::{Date, Datelike, Duration, Local, Month, NaiveDate, Weekday};
 use num_traits::FromPrimitive;
 use rayday::get_days_from_month;
 use tui::{
@@ -14,7 +14,11 @@ pub struct Weeks<'a> {
 }
 
 impl<'a> Weeks<'a> {
-    pub fn get_curr_date(today: Date<Local>, height: u16, width: u16) -> Date<Local> {
+    pub fn get_curr_date(
+        today: NaiveDate, /*Date<Local>*/
+        height: u16,
+        width: u16,
+    ) -> NaiveDate /*Date<Local>*/ {
         let mut start = today
             .checked_sub_signed(Duration::weeks(height.div(4).into()))
             .expect("Could not subtract date");
@@ -32,7 +36,7 @@ impl<'a> Weeks<'a> {
         start.checked_sub_signed(Duration::days(a)).unwrap()
     }
 
-    pub fn new(today: Date<Local>, height: u16, width: u16) -> Self {
+    pub fn new(today: NaiveDate /*Date<Local>*/, height: u16, width: u16) -> Self {
         let mut curr_date = Self::get_curr_date(today, height, width);
         let mut curr_month = curr_date.month();
         let mut curr_height = 0; // first month name

@@ -1,6 +1,7 @@
+use chrono::{DateTime, Local, NaiveTime};
 use tui::{
     buffer::Buffer,
-    layout::Rect,
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::Spans,
     text::Text,
@@ -14,6 +15,7 @@ use tui::{
 use crate::{app::InputMode, event::Event};
 
 use super::{event_slot::EventSlot, time_grid::TimeGrid};
+use centered_interval_tree::CenTreeNode;
 
 #[derive(Debug)]
 pub(crate) struct EventViewState {
@@ -32,7 +34,7 @@ impl EventViewState {
 }
 
 pub(crate) struct EventView<'a> {
-    events: Vec<Event>,
+    event_tree: CenTreeNode<NaiveTime, String>,
     style: Style,
     block: Option<Block<'a>>,
     highlight_style: Style,
@@ -42,9 +44,15 @@ pub(crate) struct EventView<'a> {
 
 impl<'a> EventView<'a> {
     pub fn new(events: Vec<Event>, input_mode: &InputMode, enhanced_graphics: bool) -> Self {
-        let events_len = events.len();
+        let mut root: CenTreeNode<NaiveTime, String> = CenTreeNode::new();
+
+        for event in events.iter() {
+            let time = event.time();
+            root.add((time.start_datetime(), time.end_datetime()), event.desc());
+        }
+
         EventView {
-            events,
+            event_tree: root,
             block: None,
             style: Style::default(),
             highlight_symbol: None,
@@ -92,18 +100,28 @@ impl<'a> StatefulWidget for EventView<'a> {
             return;
         }
 
+        let chunks = Layout::default().direction(Direction::Horizontal);
+
+        let overlaps = self.event_tree.overlaps() as u32;
+        let mut constraints = vec![];
+        for _ in 0..=overlaps {
+            constraints.push(Constraint::Ratio(1, overlaps + 1));
+        }
+
+        let chunks = chunks.constraints(constraints).split(block_area);
+
         let tg = TimeGrid::new(self.enhanced).style(Style::default().fg(Color::Red));
         tg.render(block_area, buf);
 
-        for (i, event) in self.events.iter().enumerate() {
+        for (i, (info, layer)) in self.event_tree.iter().enumerate() {
             let style = if state.selected.is_some() && state.selected.unwrap() == i {
                 Style::default().fg(Color::Red)
             } else {
                 Style::default().fg(Color::Blue)
             };
 
-            let slot = EventSlot::new(event, style);
-            slot.render(block_area, buf);
+            let slot = EventSlot::new(info, style);
+            slot.render(chunks[layer], buf);
         }
     }
 }

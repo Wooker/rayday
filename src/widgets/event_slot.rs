@@ -1,6 +1,7 @@
 use std::ops::Mul;
 
-use chrono::Timelike;
+use centered_interval_tree::InnerInfo;
+use chrono::{NaiveTime, Timelike};
 use tui::{
     buffer::Buffer,
     layout::Rect,
@@ -15,24 +16,23 @@ use tui::{
 
 use crate::event::{Event, EventTime};
 
-pub struct EventSlot<'a> {
-    event: &'a Event,
+pub struct EventSlot {
+    info: InnerInfo<NaiveTime, String>,
     style: Style,
 }
 
-impl<'a> EventSlot<'a> {
-    pub fn new(event: &'a Event, style: Style) -> Self {
-        EventSlot { event, style }
+impl EventSlot {
+    pub fn new(info: InnerInfo<NaiveTime, String>, style: Style) -> Self {
+        EventSlot { info, style }
     }
 }
 
-impl<'a> Widget for EventSlot<'a> {
+impl Widget for EventSlot {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
-        let start_datetime = self.event.time().start_datetime();
-        let end_datetime = self.event.time().end_datetime();
+        let interval = self.info.interval();
 
-        let start: f64 = start_datetime.hour() as f64 + start_datetime.minute() as f64 / 60f64;
-        let end: f64 = end_datetime.hour() as f64 + end_datetime.minute() as f64 / 60f64;
+        let start: f64 = interval.0.hour() as f64 + interval.0.minute() as f64 / 60f64;
+        let end: f64 = interval.1.hour() as f64 + interval.1.minute() as f64 / 60f64;
 
         let duration = end - start;
 
@@ -45,9 +45,9 @@ impl<'a> Widget for EventSlot<'a> {
 
         let text = format!(
             "{} ({}-{})",
-            self.event.desc(),
-            start_datetime.format("%R").to_string(),
-            end_datetime.format("%R").to_string()
+            self.info.value(),
+            interval.0.format("%R").to_string(),
+            interval.1.format("%R").to_string(),
         );
 
         let canvas = Canvas::default()
