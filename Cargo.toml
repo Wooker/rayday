@@ -17,7 +17,7 @@ serde = "1.0.136"
 serde_derive = "1.0.136"
 unicode-width = "0.1.9"
 num-traits = "0.2.15"
-centered_interval_tree = { git = "https://www.github.com/wooker/centered_interval_tree", branch = "main" }
+store-interval-tree = "0.4.0"
 
 [dependencies.confy]
 version = "0.5.1"

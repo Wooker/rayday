@@ -1,4 +1,6 @@
 use chrono::{DateTime, Local, NaiveTime};
+use std::ops::Bound::*;
+use store_interval_tree::{Interval, IntervalTree};
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
@@ -15,7 +17,6 @@ use tui::{
 use crate::{app::InputMode, event::Event};
 
 use super::{event_slot::EventSlot, time_grid::TimeGrid};
-use centered_interval_tree::CenTreeNode;
 
 #[derive(Debug)]
 pub(crate) struct EventViewState {
@@ -34,7 +35,7 @@ impl EventViewState {
 }
 
 pub(crate) struct EventView<'a> {
-    event_tree: CenTreeNode<NaiveTime, String>,
+    event_tree: IntervalTree<NaiveTime, String>,
     style: Style,
     block: Option<Block<'a>>,
     highlight_style: Style,
@@ -44,15 +45,19 @@ pub(crate) struct EventView<'a> {
 
 impl<'a> EventView<'a> {
     pub fn new(events: Vec<Event>, input_mode: &InputMode, enhanced_graphics: bool) -> Self {
-        let mut root: CenTreeNode<NaiveTime, String> = CenTreeNode::new();
+        let mut tree = IntervalTree::<NaiveTime, String>::new();
 
         for event in events.iter() {
             let time = event.time();
-            root.add((time.start_datetime(), time.end_datetime()), event.desc());
+            let interval = Interval::new(
+                Included(time.start_datetime()),
+                Excluded(time.end_datetime()),
+            );
+            tree.insert(interval, event.desc());
         }
 
         EventView {
-            event_tree: root,
+            event_tree: tree,
             block: None,
             style: Style::default(),
             highlight_symbol: None,
@@ -100,12 +105,52 @@ impl<'a> StatefulWidget for EventView<'a> {
             return;
         }
 
+        let whole_day: Interval<NaiveTime> = Interval::new(
+            Included(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
+            Included(NaiveTime::from_hms_opt(23, 59, 59).unwrap()),
+        );
+
+        let mut event_slots = Vec::<(EventSlot, usize)>::new();
+        let mut max_layer = 0;
+
+        for (i, entry) in self.event_tree.query(&whole_day).enumerate() {
+            let entry_interval = entry.interval();
+            let mut interval: (NaiveTime, NaiveTime) = (
+                NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+                NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            );
+
+            if let Included(start_time) = entry_interval.low() {
+                interval.0 = start_time.to_owned();
+            }
+
+            if let Excluded(end_time) = entry_interval.high() {
+                interval.1 = end_time.to_owned();
+            }
+
+            let layer = self
+                .event_tree
+                .intervals_between(&Interval::point(interval.0), &Interval::point(interval.1))
+                .len();
+
+            max_layer = max_layer.max(layer);
+            // dbg!(&max_layer);
+
+            let style = if state.selected.is_some() && state.selected.unwrap() == i {
+                Style::default().fg(Color::Red)
+            } else {
+                Style::default().fg(Color::Blue)
+            };
+
+            let slot = EventSlot::new(entry, style);
+            event_slots.push((slot, layer));
+        }
+
         let chunks = Layout::default().direction(Direction::Horizontal);
 
-        let overlaps = self.event_tree.overlaps() as u32;
         let mut constraints = vec![];
-        for _ in 0..=overlaps {
-            constraints.push(Constraint::Ratio(1, overlaps + 1));
+        for _ in 0..max_layer {
+            constraints.push(Constraint::Ratio(1, (max_layer) as u32));
         }
 
         let chunks = chunks.constraints(constraints).split(block_area);
@@ -113,15 +158,8 @@ impl<'a> StatefulWidget for EventView<'a> {
         let tg = TimeGrid::new(self.enhanced).style(Style::default().fg(Color::Red));
         tg.render(block_area, buf);
 
-        for (i, (info, layer)) in self.event_tree.iter().enumerate() {
-            let style = if state.selected.is_some() && state.selected.unwrap() == i {
-                Style::default().fg(Color::Red)
-            } else {
-                Style::default().fg(Color::Blue)
-            };
-
-            let slot = EventSlot::new(info, style);
-            slot.render(chunks[layer], buf);
+        for (slot, layer) in event_slots.into_iter() {
+            slot.render(chunks[max_layer - layer], buf);
         }
     }
 }
