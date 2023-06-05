@@ -4,7 +4,7 @@ use chrono::{NaiveTime, Timelike};
 use std::ops::Bound::*;
 use std::ops::RangeBounds;
 
-use store_interval_tree::Entry;
+use centered_interval_tree::InnerInfo;
 use tui::{
     buffer::Buffer,
     layout::Rect,
@@ -19,37 +19,23 @@ use tui::{
 
 use crate::event::{Event, EventTime};
 
-pub struct EventSlot<'a> {
-    entry: Entry<'a, NaiveTime, String>,
+pub struct EventSlot {
+    info: InnerInfo<NaiveTime, String>,
     style: Style,
 }
 
-impl<'a> EventSlot<'a> {
-    pub fn new(entry: Entry<'a, NaiveTime, String>, style: Style) -> Self {
-        EventSlot { entry, style }
+impl EventSlot {
+    pub fn new(info: InnerInfo<NaiveTime, String>, style: Style) -> Self {
+        EventSlot { info, style }
     }
 }
 
-impl<'a> Widget for EventSlot<'a> {
+impl Widget for EventSlot {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
-        let entry_interval = self.entry.interval();
-        let mut interval: (NaiveTime, NaiveTime) = (
-            NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
-            NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
-        );
+        let interval = self.info.interval();
+        let start: f64 = interval.0.hour() as f64 + interval.0.minute() as f64 / 60f64;
 
-        // let start: f64 = interval.low().hour() as f64 + interval.0.minute() as f64 / 60f64;
-        let mut start: f64 = 0.0;
-        if let Included(start_time) = entry_interval.low() {
-            start = start_time.hour() as f64 + start_time.minute() as f64 / 60f64;
-            interval.0 = start_time.to_owned();
-        }
-
-        let mut end: f64 = 0.0;
-        if let Excluded(end_time) = entry_interval.high() {
-            end = end_time.hour() as f64 + end_time.minute() as f64 / 60f64;
-            interval.1 = end_time.to_owned();
-        }
+        let end: f64 = interval.1.hour() as f64 + interval.1.minute() as f64 / 60f64;
 
         let duration = end - start;
 
@@ -62,7 +48,7 @@ impl<'a> Widget for EventSlot<'a> {
 
         let mut text = format!(
             "{} ({}-{})",
-            self.entry.value(),
+            self.info.value(),
             interval.0.format("%R").to_string(),
             interval.1.format("%R").to_string(),
         );
