@@ -74,7 +74,7 @@ impl Widget for EventSlot {
                     Spans::from(Span::styled(text.clone(), self.style)),
                 );
             });
-        &Clear.render(r, buf);
+        Clear.render(r, buf);
         canvas.render(area, buf);
     }
 }

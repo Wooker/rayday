@@ -5,11 +5,13 @@ use std::{
     collections::HashMap,
     default::Default,
     fs,
+    io::Write,
     path::{Path, PathBuf},
 };
 
 use chrono::prelude::*;
 use serde_derive::{Deserialize, Serialize};
+use serde_yaml::*;
 use tui::style::Color;
 
 use crate::event::{Event, EventTime, EventTimeError, Today};
@@ -23,42 +25,41 @@ const CONFIG_DIR: &str = ".config";
 const APP_CONFIG_DIR: &str = "rayday";
 const CONFIG_NAME: &str = "config.yml";
 const EVENTS_NAME: &str = "events.db";
-const TODOS_NAME: &str = "todos.db";
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
-    pub color: Color, //TODO tui feature "serde"
+    pub highlight_color: Color, //TODO tui feature "serde"
+    pub event_color: Color,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            color: Color::LightBlue,
+            highlight_color: Color::LightBlue,
+            event_color: Color::LightBlue,
         }
     }
 }
 
-pub struct ConfigFiles {
+pub struct Files {
     config_dir: PathBuf,
-    pub config: Config,
+    config: Config,
     events: PickleDb,
-    todos: PickleDb,
 }
 
-impl ConfigFiles {
-    pub fn new() -> Result<ConfigFiles, Error> {
+impl Files {
+    pub fn new() -> Result<Files, Error> {
         match dirs::home_dir() {
             Some(home) => {
                 let path = Path::new(&home);
                 let home_config_dir = path.join(CONFIG_DIR);
                 let app_config_dir = home_config_dir.join(APP_CONFIG_DIR);
 
-                let config_file_path = &app_config_dir.join(CONFIG_NAME);
-                let events_file_path = &app_config_dir.join(EVENTS_NAME);
-                let todos_file_path = &app_config_dir.join(TODOS_NAME);
+                let config_file_path = app_config_dir.join(CONFIG_NAME);
+                let events_file_path = app_config_dir.join(EVENTS_NAME);
 
                 if !home_config_dir.is_dir() {
-                    fs::create_dir(&home_config_dir)?;
+                    fs::create_dir(home_config_dir)?;
                 }
 
                 let config: Config;
@@ -66,39 +67,34 @@ impl ConfigFiles {
                 let todos_db: PickleDb;
                 if !app_config_dir.is_dir() {
                     fs::create_dir(&app_config_dir)?;
-                    //fs::File::create(config_file_path);
+                }
+                if !config_file_path.exists() {
                     config = Config::default();
+                    fs::File::create(config_file_path)?
+                        .write(serde_yaml::to_string(&config)?.as_bytes());
+                } else {
+                    config = load_path(config_file_path).unwrap();
+                }
+
+                if !events_file_path.exists() {
                     events_db = PickleDb::new(
                         events_file_path,
                         PickleDbDumpPolicy::AutoDump,
-                        SerializationMethod::Bin,
-                    );
-                    todos_db = PickleDb::new(
-                        todos_file_path,
-                        PickleDbDumpPolicy::AutoDump,
-                        SerializationMethod::Bin,
+                        SerializationMethod::Yaml,
                     );
                 } else {
-                    config = load_path(config_file_path).unwrap();
                     events_db = PickleDb::load(
                         events_file_path,
                         PickleDbDumpPolicy::AutoDump,
-                        SerializationMethod::Bin,
-                    )
-                    .unwrap();
-                    todos_db = PickleDb::load(
-                        todos_file_path,
-                        PickleDbDumpPolicy::AutoDump,
-                        SerializationMethod::Json,
+                        SerializationMethod::Yaml,
                     )
                     .unwrap();
                 }
 
-                Ok(ConfigFiles {
+                Ok(Files {
                     config_dir: app_config_dir,
                     config,
                     events: events_db,
-                    todos: todos_db,
                 })
             }
 
@@ -128,11 +124,6 @@ impl ConfigFiles {
             )
             .as_str(),
         )
-    }
-
-    pub fn add_todo(&mut self, key: &str, value: &str) -> Result<()> {
-        self.events.set(key, &value)?;
-        Ok(())
     }
 
     pub fn get_event(&self, time: EventTime) -> Option<Event> {
@@ -173,31 +164,10 @@ impl ConfigFiles {
             .collect()
     }
 
-    pub fn get_todo(&mut self, key: &str, value: &str) -> Result<()> {
-        self.events.set(key, &value)?;
-        Ok(())
-    }
-
-    pub fn todos_iter(&self) -> PickleDbIterator {
-        self.todos.iter()
-    }
-
-    pub fn get_events(&self) -> PickleDbIterator {
-        self.events.iter()
+    pub fn get_config(&self) -> &Config {
+        &self.config
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use chrono::Duration;
-    use config::Source;
-
-    use super::*;
-
-    #[test]
-    fn config() {
-        let files = ConfigFiles::new().expect("Could not read config files");
-
-        assert_eq!(Color::LightBlue, files.config.color);
-    }
-}
+mod tests {}

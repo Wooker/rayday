@@ -1,36 +1,29 @@
 use crate::{
     ui,
-    widgets::{calendar::CalendarState, event_view::EventViewState, weeks::Weeks},
+    widgets::{calendar::CalendarState, event_view::EventViewState},
 };
 use chrono::prelude::*;
 use crossterm::{
-    event::{
-        self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers,
-    },
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use rayday::get_days_from_month;
 use std::{
-    borrow::Borrow,
     error::Error,
     io,
     time::{Duration, Instant},
 };
 use tui::{
     backend::{Backend, CrosstermBackend},
-    widgets::{ListState, TableState},
     Terminal,
 };
 
 use crate::{
-    calendar::Calendar,
-    config::ConfigFiles,
-    event::{Event as CalEvent, EventTime as CalEventTime, Today},
+    event::{Event as CalEvent, EventTime as CalEventTime},
+    files::Files,
 };
 
 use chrono::Duration as ChronoDuration;
-use pickledb::error::Result as PickleResult;
 
 pub struct TabsState<'a> {
     pub titles: Vec<&'a str>,
@@ -66,11 +59,9 @@ pub(crate) struct App<'a> {
     pub should_quit: bool,
     pub state_tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
-    pub files: ConfigFiles,
-    pub starting_date: NaiveDate,      //Date<Local>,
+    pub files: Files,
     pub state_calendar: CalendarState, //Date<Local>,
     pub state_events: EventViewState,
-    pub add_event: bool,
     pub input_time: String,
     pub input_description: String,
     pub hint_text: String,
@@ -79,18 +70,16 @@ pub(crate) struct App<'a> {
 
 impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
-        let files = ConfigFiles::new().unwrap();
+        let files = Files::new().unwrap();
         let now = Local::now().naive_local().date();
         let events = files.get_events_on_date(now);
 
         App {
             title,
             should_quit: false,
-            add_event: false,
-            state_tabs: TabsState::new(vec!["Calendar", "Todo"]),
+            state_tabs: TabsState::new(vec!["Calendar"]),
             enhanced_graphics,
             files,
-            starting_date: now,
             state_calendar: CalendarState::new(now),
             state_events: EventViewState::new(None, events),
             input_time: String::new(),
@@ -278,7 +267,6 @@ impl<'a> App<'a> {
                         .get_events_on_date(self.state_calendar.get_selected_date()),
                 );
             }
-            1 => self.files.add_todo("todo", "TODO").unwrap(),
             _ => {}
         }
     }
@@ -324,6 +312,7 @@ fn run_app<B: Backend>(
         let timeout = tick_rate
             .checked_sub(last_tick.elapsed())
             .unwrap_or_else(|| Duration::from_secs(0));
+
         if crossterm::event::poll(timeout)? {
             if let Event::Key(key) = event::read()? {
                 match app.input_mode {

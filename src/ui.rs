@@ -86,7 +86,7 @@ where
         })
         .highlight_style(
             Style::default()
-                .bg(app.files.config.color)
+                .bg(app.files.get_config().highlight_color)
                 .add_modifier(Modifier::BOLD),
         );
     f.render_stateful_widget(calendar, chunks[0], &mut app.state_calendar);
