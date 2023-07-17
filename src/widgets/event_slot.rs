@@ -4,7 +4,7 @@ use chrono::{NaiveTime, Timelike};
 use std::ops::Bound::*;
 use std::ops::RangeBounds;
 
-use centered_interval_tree::InnerInfo;
+use centered_interval_tree::inner_info::InnerInfo;
 use tui::{
     buffer::Buffer,
     layout::Rect,
@@ -33,9 +33,9 @@ impl EventSlot {
 impl Widget for EventSlot {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         let interval = self.info.interval();
-        let start: f64 = interval.0.hour() as f64 + interval.0.minute() as f64 / 60f64;
+        let start: f64 = interval.start().hour() as f64 + interval.start().minute() as f64 / 60f64;
 
-        let end: f64 = interval.1.hour() as f64 + interval.1.minute() as f64 / 60f64;
+        let end: f64 = interval.end().hour() as f64 + interval.end().minute() as f64 / 60f64;
 
         let duration = end - start;
 
@@ -49,8 +49,8 @@ impl Widget for EventSlot {
         let mut text = format!(
             "{} ({}-{})",
             self.info.value(),
-            interval.0.format("%R").to_string(),
-            interval.1.format("%R").to_string(),
+            interval.start().format("%R").to_string(),
+            interval.end().format("%R").to_string(),
         );
 
         let rect = &Rectangle {

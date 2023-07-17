@@ -50,7 +50,10 @@ impl<'a> EventView<'a> {
         for event in events.iter() {
             let time = event.time();
             let interval = (time.start_datetime(), time.end_datetime());
-            tree.add(interval, event.desc());
+            tree.add(
+                centered_interval_tree::interval::Interval::new(interval.0, interval.1),
+                event.desc(),
+            );
         }
 
         EventView {
