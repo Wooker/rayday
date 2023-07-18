@@ -28,7 +28,6 @@ use tui::{
 use chrono::prelude::*;
 use chrono::{Date, Datelike, Duration, Local, Month, Weekday};
 use num_traits::FromPrimitive;
-use pickledb::PickleDbIteratorItem;
 
 use crate::event::Event;
 

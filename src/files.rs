@@ -1,6 +1,7 @@
-use anyhow::{anyhow, Error, Result};
+use anyhow::{anyhow, Error as AnyhowError, Result};
 //use config::{Config, ConfigError, Map, Source, Value};
 use confy::{load_path, store_path};
+use rocksdb::{Error as RocksError, DB};
 use std::{
     collections::HashMap,
     default::Default,
@@ -15,11 +16,6 @@ use serde_yaml::*;
 use tui::style::Color;
 
 use crate::event::{Event, EventTime, EventTimeError, Today};
-
-use pickledb::{
-    error::{Error as PickleError, Result as PickleResult},
-    PickleDb, PickleDbDumpPolicy, PickleDbIterator, SerializationMethod,
-};
 
 const CONFIG_DIR: &str = ".config";
 const APP_CONFIG_DIR: &str = "rayday";
@@ -44,11 +40,11 @@ impl Default for Config {
 pub struct Files {
     config_dir: PathBuf,
     config: Config,
-    events: PickleDb,
+    events: DB,
 }
 
 impl Files {
-    pub fn new() -> Result<Files, Error> {
+    pub fn new() -> Result<Files> {
         match dirs::home_dir() {
             Some(home) => {
                 let path = Path::new(&home);
@@ -63,8 +59,6 @@ impl Files {
                 }
 
                 let config: Config;
-                let events_db: PickleDb;
-                let todos_db: PickleDb;
                 if !app_config_dir.is_dir() {
                     fs::create_dir(&app_config_dir)?;
                 }
@@ -76,25 +70,10 @@ impl Files {
                     config = load_path(config_file_path).unwrap();
                 }
 
-                if !events_file_path.exists() {
-                    events_db = PickleDb::new(
-                        events_file_path,
-                        PickleDbDumpPolicy::AutoDump,
-                        SerializationMethod::Yaml,
-                    );
-                } else {
-                    events_db = PickleDb::load(
-                        events_file_path,
-                        PickleDbDumpPolicy::AutoDump,
-                        SerializationMethod::Yaml,
-                    )
-                    .unwrap();
-                }
-
                 Ok(Files {
                     config_dir: app_config_dir,
                     config,
-                    events: events_db,
+                    events: rocksdb::DB::open_default(events_file_path).unwrap(),
                 })
             }
 
@@ -102,21 +81,21 @@ impl Files {
         }
     }
 
-    pub fn add_event(&mut self, event: Event) -> Result<(), PickleError> {
-        self.events.set(
+    pub fn add_event(&mut self, event: Event) -> Result<(), RocksError> {
+        self.events.put(
             format!(
-                "{}|{}|{}",
+                "{}|{}-{}",
                 &event.date(),
                 &event.time().start_datetime().to_string(),
                 &event.time().end_datetime().to_string()
             )
-            .as_str(),
-            &event.desc(),
+            .as_bytes(),
+            &event.desc().as_bytes(),
         )
     }
 
-    pub fn remove_event(&mut self, time: EventTime) -> PickleResult<bool> {
-        self.events.rem(
+    pub fn remove_event(&mut self, time: EventTime) -> Result<(), RocksError> {
+        self.events.delete(
             format!(
                 "{}|{}",
                 time.start_datetime().to_string(),
@@ -126,39 +105,33 @@ impl Files {
         )
     }
 
-    pub fn get_event(&self, time: EventTime) -> Option<Event> {
-        self.events.get(
-            format!(
-                "{}|{}",
-                time.start_datetime().to_string(),
-                time.end_datetime().to_string()
-            )
-            .as_str(),
-        )
+    pub fn get_event(&self, date: NaiveDate, time: EventTime) -> Option<Event> {
+        match self
+            .events
+            .get(format!("{}|{}", &date, &time.to_string()).as_bytes())
+        {
+            Ok(Some(ev)) => {
+                let s = String::from_utf8(ev.to_vec()).unwrap();
+                let event = s.parse::<Event>().unwrap();
+                Some(event)
+            }
+            Ok(None) => None,
+            Err(_) => None,
+        }
     }
 
     pub fn get_events_on_date(&self, date: NaiveDate) -> Vec<Event> {
         // Get EventTime as keys from db
         self.events
-            .iter()
+            .full_iterator(rocksdb::IteratorMode::Start)
             .map(|e| {
-                let mut key = e.get_key().split('|').collect::<Vec<&str>>();
+                let result = e.unwrap();
+                let datetime = String::from_utf8(result.0.to_vec()).unwrap();
+                let description = String::from_utf8(result.1.to_vec()).unwrap();
 
-                let end_str = key.pop().unwrap();
-                let start_str = key.pop().unwrap();
-                let date_str = key.pop().unwrap();
-
-                let time_format = "%H:%M:%S";
-
-                Event::new(
-                    NaiveDate::parse_from_str(date_str, "%Y-%m-%d").unwrap(),
-                    EventTime::new(
-                        NaiveTime::parse_from_str(start_str, time_format).unwrap(),
-                        NaiveTime::parse_from_str(end_str, time_format).unwrap(),
-                    )
-                    .unwrap(),
-                    e.get_value::<String>().unwrap(),
-                )
+                format!("{}|{}", datetime, description)
+                    .parse::<Event>()
+                    .unwrap()
             })
             .filter(|e| e.date() == date)
             .collect()

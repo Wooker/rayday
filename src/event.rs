@@ -1,8 +1,14 @@
 use chrono::{prelude::*, Duration};
 
 use serde::{Deserialize, Serialize};
-use std::{borrow::Borrow, cmp, fmt};
+use std::{
+    borrow::Borrow,
+    cmp,
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
+const PARSE_DATE: &str = "%Y-%m-%d";
 const PARSE_TIME: &str = "%H:%M:%S";
 
 enum Periodicity {
@@ -63,15 +69,16 @@ impl EventTime {
     }
 
     pub fn to_string(&self) -> String {
-        format!("{}|{}", self.start_datetime(), self.end_datetime())
+        format!("{}-{}", self.start_datetime(), self.end_datetime())
     }
 }
 
 impl From<&str> for EventTime {
     fn from(item: &str) -> Self {
-        let mut v = item.split('|').collect::<Vec<&str>>();
-        let end: &str = v.pop().unwrap();
-        let start: &str = v.pop().unwrap();
+        // dbg!(&item);
+        let mut v = item.split_once('-').unwrap();
+        let start: &str = v.0;
+        let end: &str = v.1;
 
         EventTime {
             start: NaiveTime::parse_from_str(start, PARSE_TIME).unwrap(),
@@ -105,6 +112,11 @@ impl Today for EventTime {
     }
 }
 
+#[derive(Debug)]
+pub enum EventError {
+    Parsing,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Event {
     date: NaiveDate,
@@ -134,7 +146,32 @@ impl Event {
     }
 
     pub fn to_string(&self) -> String {
-        format!("{}: {}", self.time.to_string(), self.description)
+        format!(
+            "{}|{}|{}",
+            self.date,
+            self.time.to_string(),
+            self.description
+        )
+    }
+}
+
+impl FromStr for Event {
+    type Err = EventError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // dbg!(&s);
+        let mut v = s.split('|').collect::<Vec<&str>>();
+
+        let description = String::from(v.pop().unwrap());
+        let time = EventTime::from(v.pop().unwrap());
+        let date = NaiveDate::parse_from_str(v.pop().unwrap(), PARSE_DATE).unwrap();
+
+        let event = Event {
+            date,
+            time,
+            description,
+        };
+        Ok(event)
     }
 }
 
@@ -170,6 +207,18 @@ mod tests {
     use super::*;
 
     #[test]
+    fn parsing() {
+        let start = NaiveTime::from_hms_opt(12, 0, 0).unwrap();
+        let end = NaiveTime::from_hms_opt(12, 30, 0).unwrap();
+        let e = EventTime::new(start, end).unwrap();
+
+        let event = Event::new(NaiveDate::from_ymd(2023, 7, 18), e, String::from("Test"));
+
+        let s = event.to_string();
+        assert_eq!(event, s.parse::<Event>().unwrap());
+    }
+
+    #[test]
     fn event_time_constructor_normal_time_ordering() {
         let start = NaiveTime::from_hms_opt(12, 0, 0).unwrap();
         let end = NaiveTime::from_hms_opt(12, 30, 0).unwrap();
@@ -195,6 +244,6 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(EventTime::from("00:00:00|01:00:00"), time);
+        assert_eq!(EventTime::from("00:00:00-01:00:00"), time);
     }
 }
