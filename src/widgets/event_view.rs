@@ -106,10 +106,10 @@ impl<'a> StatefulWidget for EventView<'a> {
         }
 
         let chunks = Layout::default().direction(Direction::Horizontal);
-        let overlaps = self.event_tree.overlaps();
+        let max_slots = self.event_tree.overlaps() + 1;
         let mut constraints = vec![];
-        for _ in 0..=overlaps {
-            constraints.push(Constraint::Ratio(1, (overlaps + 1) as u32));
+        for _ in 0..max_slots {
+            constraints.push(Constraint::Ratio(1, (max_slots) as u32));
         }
 
         let chunks = chunks.constraints(constraints).split(block_area);
@@ -125,7 +125,7 @@ impl<'a> StatefulWidget for EventView<'a> {
             };
 
             let slot = EventSlot::new(info, style);
-            slot.render(chunks[layer], buf);
+            slot.render(chunks[chunks.len().saturating_sub(layer + 1)], buf);
         }
     }
 }

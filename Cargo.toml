@@ -19,6 +19,7 @@ unicode-width = "0.1.9"
 num-traits = "0.2.15"
 centered_interval_tree = { git = "https://www.github.com/wooker/centered_interval_tree" }
 rocksdb = { version = "0.21.0", features = [ "serde" ] }
+log = "0.4"
 
 [dependencies.confy]
 version = "0.5.1"
