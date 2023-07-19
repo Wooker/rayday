@@ -8,6 +8,7 @@ mod ui;
 mod widgets;
 
 use app::run;
+use chrono::NaiveDate;
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -18,6 +19,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     //     }
     //     println!();
     // }
+
+    // let files = files::Files::new().unwrap();
+    // let events = files.get_events_on_date(NaiveDate::from_ymd(2023, 7, 18));
+    // dbg!(&events);
 
     let tick_rate = std::time::Duration::from_secs(1);
     run(tick_rate, true)?;

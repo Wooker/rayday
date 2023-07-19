@@ -22,11 +22,12 @@ use crate::event::{Event, EventTime};
 pub struct EventSlot {
     info: InnerInfo<NaiveTime, String>,
     style: Style,
+    debug: String,
 }
 
 impl EventSlot {
-    pub fn new(info: InnerInfo<NaiveTime, String>, style: Style) -> Self {
-        EventSlot { info, style }
+    pub fn new(info: InnerInfo<NaiveTime, String>, style: Style, debug: String) -> Self {
+        EventSlot { info, style, debug }
     }
 }
 
@@ -48,7 +49,7 @@ impl Widget for EventSlot {
 
         let mut text = format!(
             "{} ({}-{})",
-            self.info.value(),
+            self.debug,
             interval.start().format("%R").to_string(),
             interval.end().format("%R").to_string(),
         );

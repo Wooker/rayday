@@ -49,9 +49,11 @@ impl<'a> EventView<'a> {
 
         for event in events.iter() {
             let time = event.time();
-            let interval = (time.start_datetime(), time.end_datetime());
             tree.add(
-                centered_interval_tree::interval::Interval::new(interval.0, interval.1),
+                centered_interval_tree::interval::Interval::new(
+                    time.start_datetime(),
+                    time.end_datetime(),
+                ),
                 event.desc(),
             );
         }
@@ -117,15 +119,21 @@ impl<'a> StatefulWidget for EventView<'a> {
         let tg = TimeGrid::new(self.enhanced).style(Style::default().fg(Color::Red));
         tg.render(block_area, buf);
 
-        for (i, (info, layer)) in self.event_tree.iter().enumerate() {
+        for (i, (info, mut layer, has_overlaps)) in self.event_tree.iter().enumerate() {
             let style = if state.selected.is_some() && state.selected.unwrap() == i {
                 Style::default().fg(Color::Red)
             } else {
                 Style::default().fg(Color::Blue)
             };
 
-            let slot = EventSlot::new(info, style);
-            slot.render(chunks[chunks.len().saturating_sub(layer + 1)], buf);
+            let slot = EventSlot::new(info, style, layer.to_string());
+
+            let mut chunks_union = chunks[layer];
+            while !has_overlaps && layer != max_slots {
+                chunks_union = chunks_union.union(chunks[layer]);
+                layer = layer.saturating_add(1);
+            }
+            slot.render(chunks_union, buf);
         }
     }
 }
