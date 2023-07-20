@@ -71,8 +71,9 @@ pub(crate) struct App<'a> {
 impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
         let files = Files::new().unwrap();
-        let now = Local::now().naive_local().date();
-        let events = files.get_events_on_date(now);
+        let selected_date = NaiveDate::from_ymd(2023, 1, 1); //Local::now().naive_local().date();
+        let events = files.get_events_on_date(selected_date);
+        dbg!("App is created");
 
         App {
             title,
@@ -80,7 +81,7 @@ impl<'a> App<'a> {
             state_tabs: TabsState::new(vec!["Calendar"]),
             enhanced_graphics,
             files,
-            state_calendar: CalendarState::new(now),
+            state_calendar: CalendarState::new(selected_date),
             state_events: EventViewState::new(None, events),
             input_time: String::new(),
             input_description: String::new(),
