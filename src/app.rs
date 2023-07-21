@@ -232,6 +232,20 @@ impl<'a> App<'a> {
                 self.input_mode = InputMode::Normal;
                 self.state_events.select(None);
             }
+            'd' => {
+                if let Some(selected) = self.state_events.selected {
+                    let date = self.state_calendar.get_selected_date();
+
+                    let time = self.state_events.events.get(selected).unwrap().time();
+                    self.state_events.events.remove(selected);
+                    self.state_events.selected = None;
+                    self.files.remove_event(date, time);
+
+                    if self.state_events.events.is_empty() {
+                        self.input_mode = InputMode::Normal;
+                    }
+                }
+            }
             _ => {}
         }
     }

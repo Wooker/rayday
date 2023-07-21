@@ -94,10 +94,11 @@ impl Files {
         )
     }
 
-    pub fn remove_event(&mut self, time: EventTime) -> Result<(), RocksError> {
+    pub fn remove_event(&mut self, date: NaiveDate, time: EventTime) -> Result<(), RocksError> {
         self.events.delete(
             format!(
-                "{}|{}",
+                "{}|{}-{}",
+                date,
                 time.start_datetime().to_string(),
                 time.end_datetime().to_string()
             )
