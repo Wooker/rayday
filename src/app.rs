@@ -238,12 +238,19 @@ impl<'a> App<'a> {
 
                     let time = self.state_events.events.get(selected).unwrap().time();
                     self.state_events.events.remove(selected);
-                    self.state_events.selected = None;
-                    self.files.remove_event(date, time);
 
-                    if self.state_events.events.is_empty() {
+                    if let Some(upper) = self.state_events.events.get(selected) {
+                        self.state_events.selected = Some(selected);
+                    } else if let Some(lower) =
+                        self.state_events.events.get(selected.saturating_sub(1))
+                    {
+                        self.state_events.selected = Some(selected - 1);
+                    } else {
                         self.input_mode = InputMode::Normal;
+                        self.state_events.selected = None;
                     }
+
+                    self.files.remove_event(date, time);
                 }
             }
             _ => {}
