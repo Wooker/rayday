@@ -1,3 +1,5 @@
+pub(crate) mod iterator;
+
 use chrono::{prelude::*, Duration};
 
 use serde::{Deserialize, Serialize};
