@@ -117,17 +117,10 @@ impl Files {
     }
 
     pub fn remove_event(&mut self, id: usize) -> Result<(), Error> {
-        /*
-        self.events.delete(
-            format!(
-                "{}|{}-{}",
-                date,
-                time.start_datetime().to_string(),
-                time.end_datetime().to_string()
-            )
-            .as_str(),
-        )
-        */
+        self.db
+            .execute("delete from events where id=?1", params![id])
+            .expect("Could not remove event from db");
+
         Ok(())
     }
 
