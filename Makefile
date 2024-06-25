@@ -26,3 +26,6 @@ db: ## Enter the database with `sqlite3`
 db-list: ## Execute database command to list all events
 	sqlite3 $(DB_PATH) "select * from events;"
 
+db-drop:
+	sqlite3 $(DB_PATH) "delete from events;"
+
