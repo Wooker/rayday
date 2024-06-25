@@ -1,16 +1,19 @@
 use anyhow::{anyhow, Error as AnyhowError, Result};
 //use config::{Config, ConfigError, Map, Source, Value};
 use confy::{load_path, store_path};
-use rocksdb::{Error as RocksError, DB};
+use log2::{debug, info};
+use rusqlite::{params, Connection, Params};
 use std::{
     collections::HashMap,
     default::Default,
     fs,
     io::Write,
+    ops::Add,
+    os::fd::AsFd,
     path::{Path, PathBuf},
 };
 
-use chrono::prelude::*;
+use chrono::{prelude::*, Duration};
 use serde_derive::{Deserialize, Serialize};
 use serde_yaml::*;
 use tui::style::Color;
@@ -40,7 +43,7 @@ impl Default for Config {
 pub struct Files {
     config_dir: PathBuf,
     config: Config,
-    events: DB,
+    db: Connection,
 }
 
 impl Files {
@@ -70,31 +73,51 @@ impl Files {
                     config = load_path(config_file_path).unwrap();
                 }
 
-                Ok(Files {
-                    config_dir: app_config_dir,
-                    config,
-                    events: rocksdb::DB::open_default(events_file_path).unwrap(),
-                })
-            }
+                let db_file = PathBuf::from(app_config_dir.join("events.db"));
 
+                match Connection::open(db_file.clone()) {
+                    Ok(db) => Ok(Files {
+                        config_dir: app_config_dir,
+                        config,
+                        db, // rocksdb::DB::open_default(events_file_path).unwrap(),
+                    }),
+                    Err(e) => {
+                        fs::File::create_new(db_file.clone());
+                        let db = Connection::open(db_file).unwrap();
+                        db.execute(
+                            r"create table if not exists events(
+                                id integer primary key,
+                                description text not null,
+                                start datetime not null,
+                                end datetime not null
+                            )",
+                            params![],
+                        )?;
+
+                        Ok(Files {
+                            config_dir: app_config_dir,
+                            config,
+                            db, // rocksdb::DB::open_default(events_file_path).unwrap(),
+                        })
+                    }
+                }
+            }
             None => Err(anyhow!("No $HOME directory found for config")),
         }
     }
 
-    pub fn add_event(&mut self, event: Event) -> Result<(), RocksError> {
-        self.events.put(
-            format!(
-                "{}|{}-{}",
-                &event.date(),
-                &event.time().start_datetime().to_string(),
-                &event.time().end_datetime().to_string()
-            )
-            .as_bytes(),
-            &event.desc().as_bytes(),
-        )
+    pub fn add_event(&mut self, event: Event) -> Result<(), Error> {
+        self.db.execute(
+            "insert into events (description, start, end) values (?1, ?2, ?3)",
+            params![event.desc(), event.start(), event.end(),],
+        );
+
+        info!("Added event {}", event.to_string());
+        Ok(())
     }
 
-    pub fn remove_event(&mut self, date: NaiveDate, time: EventTime) -> Result<(), RocksError> {
+    pub fn remove_event(&mut self, id: usize) -> Result<(), Error> {
+        /*
         self.events.delete(
             format!(
                 "{}|{}-{}",
@@ -104,38 +127,46 @@ impl Files {
             )
             .as_str(),
         )
+        */
+        Ok(())
     }
 
-    pub fn get_event(&self, date: NaiveDate, time: EventTime) -> Option<Event> {
-        match self
-            .events
-            .get(format!("{}|{}", &date, &time.to_string()).as_bytes())
-        {
-            Ok(Some(ev)) => {
-                let s = String::from_utf8(ev.to_vec()).unwrap();
-                let event = s.parse::<Event>().unwrap();
-                Some(event)
-            }
-            Ok(None) => None,
-            Err(_) => None,
-        }
+    pub fn get_event(&self, id: usize) -> Option<Event> {
+        let mut stmt = self
+            .db
+            .prepare("select * from events where id = ?1")
+            .expect("Could not prepare statement");
+        let event = stmt.query([id]).expect("Could not query statement");
+        info!("Event with id: {}", id);
+
+        None
     }
 
     pub fn get_events_on_date(&self, date: NaiveDate) -> Vec<Event> {
         // Get EventTime as keys from db
-        self.events
-            .full_iterator(rocksdb::IteratorMode::Start)
-            .map(|e| {
-                let result = e.unwrap();
-                let datetime = String::from_utf8(result.0.to_vec()).unwrap();
-                let description = String::from_utf8(result.1.to_vec()).unwrap();
+        let mut stmt = self
+            .db
+            .prepare("select * from events where start > ?1 and end < ?2")
+            .expect("Could not prepare statement");
 
-                format!("{}|{}", datetime, description)
-                    .parse::<Event>()
-                    .unwrap()
+        // Query rows and parse Events
+        let event_iter = stmt
+            .query_map([date, date.add(Duration::days(1))], |row| {
+                let id = Some(row.get::<usize, usize>(0).unwrap());
+                Ok(Event::new(
+                    id,
+                    row.get(1).unwrap(),
+                    row.get(2).unwrap(),
+                    row.get(3).unwrap(),
+                ))
             })
-            .filter(|e| e.date() == date)
-            .collect()
+            .expect("Could not query rows");
+
+        // Collect events
+        let events = event_iter.map(|e| e.unwrap()).collect();
+
+        debug!("Events on date {}: {:?}", date, events);
+        events
     }
 
     pub fn get_config(&self) -> &Config {

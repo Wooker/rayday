@@ -5,9 +5,12 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[workspace]
+members = ["centered_interval_tree"]
+
 [dependencies]
 anyhow = "1.0.57"
-chrono = { version = "=0.4.19", features = ["serde"] }
+chrono = { version = "=0.4.26", features = ["serde"] }
 clip = "0.1.1"
 config = "0.13.1"
 crossterm = "0.23.2"
@@ -17,12 +20,13 @@ serde_yaml = "0.9"
 serde_derive = "1.0.136"
 unicode-width = "0.1.9"
 num-traits = "0.2.15"
-rocksdb = { version = "0.21.0", features = [ "serde" ] }
-log = "0.4"
+# centered_interval_tree = { git = "https://www.github.com/wooker/centered_interval_tree" }
 centered_interval_tree = { path = "./centered_interval_tree" }
+rusqlite = { version = "0.31.0", features = ["chrono"] }
+log2 = "0.1.11"
 
 [dependencies.confy]
-version = "0.5.1"
+version = "0.6.1"
 features = ["yaml_conf"]
 default-features = false
 

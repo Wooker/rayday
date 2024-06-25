@@ -1,5 +1,6 @@
 use std::ops::Mul;
 
+use chrono::NaiveDateTime;
 use chrono::{NaiveTime, Timelike};
 use std::ops::Bound::*;
 use std::ops::RangeBounds;
@@ -20,13 +21,13 @@ use tui::{
 use crate::event::{Event, EventTime};
 
 pub struct EventSlot {
-    info: InnerInfo<NaiveTime, String>,
+    info: InnerInfo<NaiveDateTime, String>,
     style: Style,
     debug: String,
 }
 
 impl EventSlot {
-    pub fn new(info: InnerInfo<NaiveTime, String>, style: Style, debug: String) -> Self {
+    pub fn new(info: InnerInfo<NaiveDateTime, String>, style: Style, debug: String) -> Self {
         EventSlot { info, style, debug }
     }
 }

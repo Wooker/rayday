@@ -1,5 +1,5 @@
 use centered_interval_tree::CenteredIntervalTree;
-use chrono::{DateTime, Local, NaiveTime};
+use chrono::{DateTime, Local, NaiveDateTime, NaiveTime};
 
 use tui::{
     buffer::Buffer,
@@ -35,7 +35,7 @@ impl EventViewState {
 }
 
 pub(crate) struct EventView<'a> {
-    event_tree: CenteredIntervalTree<NaiveTime, String>,
+    event_tree: CenteredIntervalTree<NaiveDateTime, String>,
     style: Style,
     block: Option<Block<'a>>,
     highlight_style: Style,
@@ -45,15 +45,11 @@ pub(crate) struct EventView<'a> {
 
 impl<'a> EventView<'a> {
     pub fn new(events: Vec<Event>, input_mode: &InputMode, enhanced_graphics: bool) -> Self {
-        let mut tree = CenteredIntervalTree::<NaiveTime, String>::new(); //IntervalTree::<NaiveTime, String>::new();
+        let mut tree = CenteredIntervalTree::<NaiveDateTime, String>::new(); //IntervalTree::<NaiveTime, String>::new();
 
         for event in events.iter() {
-            let time = event.time();
             tree.add(
-                centered_interval_tree::interval::Interval::new(
-                    time.start_datetime(),
-                    time.end_datetime(),
-                ),
+                centered_interval_tree::interval::Interval::new(event.start(), event.end()),
                 event.desc(),
             );
         }

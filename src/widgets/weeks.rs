@@ -1,6 +1,6 @@
 use std::ops::Div;
 
-use chrono::{Date, Datelike, Duration, Local, Month, NaiveDate, Weekday};
+use chrono::{Datelike, Duration, Local, Month, NaiveDate, Weekday};
 use num_traits::FromPrimitive;
 use rayday::get_days_from_month;
 use tui::{
@@ -103,7 +103,7 @@ impl<'a> Weeks<'a> {
                 spans.push(Span::raw(" "));
 
                 // Increase date
-                curr_date = curr_date.succ();
+                curr_date = curr_date.succ_opt().expect("Last date is reached");
             }
             text.push(Spans::from(spans));
             curr_height += 1;

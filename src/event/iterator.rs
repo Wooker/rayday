@@ -51,7 +51,7 @@ where
     fn events_iter(&self) -> CenTreeNodeIterator<I, V> {
         let mut stack = Vec::new();
 
-        if let Some(root) = self.inner().as_ref() {
+        if let Some(root) = self.inner.as_ref() {
             stack.push((Some(Rc::clone(root)), 0, false, 1));
         }
 

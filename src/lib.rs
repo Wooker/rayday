@@ -10,7 +10,7 @@ pub fn is_leap_year(year: u32) -> bool {
 }
 
 pub fn get_days_from_month(year: i32, month: u32) -> i64 {
-    NaiveDate::from_ymd(
+    NaiveDate::from_ymd_opt(
         match month {
             12 => year + 1,
             _ => year,
@@ -21,6 +21,7 @@ pub fn get_days_from_month(year: i32, month: u32) -> i64 {
         },
         1,
     )
-    .signed_duration_since(NaiveDate::from_ymd(year, month, 1))
+    .expect("Out of range date")
+    .signed_duration_since(NaiveDate::from_ymd_opt(year, month, 1).expect("Out of range date"))
     .num_days()
 }

@@ -8,6 +8,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use log2::{debug, info};
 use std::{
     error::Error,
     io,
@@ -71,9 +72,10 @@ pub(crate) struct App<'a> {
 impl<'a> App<'a> {
     pub fn new(title: &'a str, enhanced_graphics: bool) -> App<'a> {
         let files = Files::new().unwrap();
-        let selected_date = NaiveDate::from_ymd(2023, 1, 1); //Local::now().naive_local().date();
+        let selected_date = Local::now().naive_local().date();
         let events = files.get_events_on_date(selected_date);
-        dbg!("App is created");
+        debug!("App is created");
+        debug!("Events: {:?}", events);
 
         App {
             title,
@@ -222,7 +224,14 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn on_tick(&mut self) {}
+    pub fn on_tick(&mut self) {
+        info!("On tick");
+        self.state_events.events = self
+            .files
+            .get_events_on_date(self.state_calendar.get_selected_date());
+
+        info!("App events after tick: {:?}", self.state_events.events);
+    }
 
     pub fn event_on_key(&mut self, c: char) {
         match c {
@@ -233,30 +242,31 @@ impl<'a> App<'a> {
                 self.state_events.select(None);
             }
             'd' => {
-                if let Some(selected) = self.state_events.selected {
+                if let Some(selected_idx) = self.state_events.selected {
                     let date = self.state_calendar.get_selected_date();
 
-                    let time = self.state_events.events.get(selected).unwrap().time();
-                    self.state_events.events.remove(selected);
+                    self.state_events.events.remove(selected_idx);
+                    debug!("Events on date {}: {:?}", date, self.state_events.events);
+                    let selected_event = self.state_events.events.get(selected_idx).unwrap();
+                    //self.files.remove_event(selected_event.id().unwrap());
 
-                    if let Some(upper) = self.state_events.events.get(selected) {
-                        self.state_events.selected = Some(selected);
+                    if let Some(upper) = self.state_events.events.get(selected_idx) {
+                        self.state_events.selected = Some(selected_idx);
                     } else if let Some(lower) =
-                        self.state_events.events.get(selected.saturating_sub(1))
+                        self.state_events.events.get(selected_idx.saturating_sub(1))
                     {
-                        self.state_events.selected = Some(selected - 1);
+                        self.state_events.selected = Some(selected_idx - 1);
                     } else {
                         self.input_mode = InputMode::Normal;
                         self.state_events.selected = None;
                     }
-
-                    self.files.remove_event(date, time);
                 }
             }
             _ => {}
         }
     }
 
+    // Handler for adding a new event
     pub fn on_add_item(&mut self) {
         match self.state_tabs.index {
             0 => {
@@ -269,15 +279,21 @@ impl<'a> App<'a> {
                 let (s_h, s_m) = (s_h_m.get(0).unwrap(), s_h_m.get(1).unwrap());
                 let (e_h, e_m) = (e_h_m.get(0).unwrap(), e_h_m.get(1).unwrap());
 
+                let date = self.state_calendar.get_selected_date();
+
                 let event = CalEvent::new(
-                    self.state_calendar.get_selected_date(),
-                    CalEventTime::new_md(
-                        self.state_calendar.get_selected_date(),
-                        (s_h.parse::<u32>().unwrap(), s_m.parse::<u32>().unwrap()),
-                        (e_h.parse::<u32>().unwrap(), e_m.parse::<u32>().unwrap()),
+                    None,
+                    self.input_description.clone(),
+                    NaiveDateTime::parse_from_str(
+                        format!("{} {}", date, s_e.get(0).unwrap()).as_str(),
+                        "%Y-%m-%d %H:%M:%S",
                     )
                     .unwrap(),
-                    self.input_description.clone(),
+                    NaiveDateTime::parse_from_str(
+                        format!("{} {}", date, s_e.get(1).unwrap()).as_str(),
+                        "%Y-%m-%d %H:%M:%S",
+                    )
+                    .unwrap(),
                 );
                 self.files.add_event(event).unwrap();
 
@@ -315,6 +331,7 @@ pub fn run(tick_rate: Duration, enhanced_graphics: bool) -> Result<(), Box<dyn E
     )?;
     terminal.show_cursor()?;
 
+    debug!("Result: {:?}", res);
     if let Err(err) = res {
         println!("{:?}", err)
     }

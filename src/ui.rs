@@ -11,6 +11,7 @@ use crate::{
         weeks::Weeks,
     },
 };
+use log2::debug;
 use tui::{
     backend::Backend,
     buffer::Buffer,
@@ -26,7 +27,7 @@ use tui::{
 };
 
 use chrono::prelude::*;
-use chrono::{Date, Datelike, Duration, Local, Month, Weekday};
+use chrono::{Datelike, Duration, Local, Month, Weekday};
 use num_traits::FromPrimitive;
 
 use crate::event::Event;
@@ -92,9 +93,14 @@ where
 
     let selected_date = app.state_calendar.get_selected_date();
 
+    app.state_events.events = app
+        .files
+        .get_events_on_date(app.state_calendar.get_selected_date());
+    debug!("App events: {:?}", app.state_events.events);
+
     let mut ev = EventView::new(
-        app.files
-            .get_events_on_date(app.state_calendar.get_selected_date()),
+        // app.files.get_events_on_date(app.state_calendar.get_selected_date()),
+        app.state_events.events.clone(),
         &app.input_mode,
         app.enhanced_graphics,
     )

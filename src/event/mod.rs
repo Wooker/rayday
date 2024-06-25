@@ -2,6 +2,7 @@ pub(crate) mod iterator;
 
 use chrono::{prelude::*, Duration};
 
+use log2::debug;
 use serde::{Deserialize, Serialize};
 use std::{
     borrow::Borrow,
@@ -98,7 +99,7 @@ impl Into<String> for EventTime {
 impl Today for EventTime {
     // duration in minutes
     fn today(hours: u32, minutes: u32, d: Duration) -> EventTime {
-        let today = Local::today().and_hms(hours, minutes, 0);
+        let today = Local::now().naive_local();
 
         let start = NaiveTime::from_hms_opt(hours, minutes, 0).unwrap();
         let (end, seconds) = start.overflowing_add_signed(d);
@@ -121,37 +122,48 @@ pub enum EventError {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Event {
-    date: NaiveDate,
-    time: EventTime,
+    id: Option<usize>,
+    start: NaiveDateTime,
+    end: NaiveDateTime,
     description: String,
 }
 
 impl Event {
-    pub fn new(date: NaiveDate, time: EventTime, description: String) -> Event {
+    pub fn new(
+        id: Option<usize>,
+        description: String,
+        start: NaiveDateTime,
+        end: NaiveDateTime,
+    ) -> Event {
         Event {
-            date,
-            time,
+            id,
+            start,
+            end,
             description,
         }
     }
 
-    pub fn time(&self) -> EventTime {
-        self.time
+    pub fn id(&self) -> Option<usize> {
+        self.id
+    }
+
+    pub fn start(&self) -> NaiveDateTime {
+        self.start
+    }
+
+    pub fn end(&self) -> NaiveDateTime {
+        self.end
     }
 
     pub fn desc(&self) -> String {
         self.description.to_string()
     }
 
-    pub fn date(&self) -> NaiveDate {
-        self.date
-    }
-
     pub fn to_string(&self) -> String {
         format!(
             "{}|{}|{}",
-            self.date,
-            self.time.to_string(),
+            self.start.to_string(),
+            self.end.to_string(),
             self.description
         )
     }
@@ -164,14 +176,16 @@ impl FromStr for Event {
         // dbg!(&s);
         let mut v = s.split('|').collect::<Vec<&str>>();
 
+        let id = String::from(v.pop().unwrap());
         let description = String::from(v.pop().unwrap());
-        let time = EventTime::from(v.pop().unwrap());
-        let date = NaiveDate::parse_from_str(v.pop().unwrap(), PARSE_DATE).unwrap();
+        let start = NaiveDateTime::parse_from_str(v.pop().unwrap(), PARSE_DATE).unwrap();
+        let end = NaiveDateTime::parse_from_str(v.pop().unwrap(), PARSE_DATE).unwrap();
 
         let event = Event {
-            date,
-            time,
+            id: Some(id.parse::<usize>().unwrap()),
             description,
+            start,
+            end,
         };
         Ok(event)
     }
@@ -179,9 +193,9 @@ impl FromStr for Event {
 
 impl PartialOrd for Event {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        if self.time.start < other.time.start {
+        if self.start < other.start {
             Some(std::cmp::Ordering::Less)
-        } else if self.time.start == other.time.start && self.time.end < other.time.end {
+        } else if self.start == other.start && self.end < other.end {
             Some(std::cmp::Ordering::Less)
         } else {
             Some(std::cmp::Ordering::Greater)
@@ -191,15 +205,15 @@ impl PartialOrd for Event {
 
 impl Ord for Event {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
-        if self.time.start.cmp(&other.time.start) == std::cmp::Ordering::Equal {
+        if self.start.cmp(&other.start) == std::cmp::Ordering::Equal {
             // println!("Start the same");
-            if self.time.end.cmp(&other.time.end) == std::cmp::Ordering::Equal {
+            if self.end.cmp(&other.end) == std::cmp::Ordering::Equal {
                 std::cmp::Ordering::Less
             } else {
-                self.time.end.cmp(&other.time.end)
+                self.end.cmp(&other.end)
             }
         } else {
-            self.time.start.cmp(&other.time.start)
+            self.start.cmp(&other.start)
         }
     }
 }
@@ -214,7 +228,12 @@ mod tests {
         let end = NaiveTime::from_hms_opt(12, 30, 0).unwrap();
         let e = EventTime::new(start, end).unwrap();
 
-        let event = Event::new(NaiveDate::from_ymd(2023, 7, 18), e, String::from("Test"));
+        let event = Event::new(
+            None,
+            NaiveDate::from_ymd(2023, 7, 18),
+            e,
+            String::from("Test"),
+        );
 
         let s = event.to_string();
         assert_eq!(event, s.parse::<Event>().unwrap());

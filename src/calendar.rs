@@ -1,19 +1,19 @@
-use chrono::{Date, Datelike, Duration, Local};
+use chrono::{Datelike, Duration, Local, NaiveDate};
 use rayday::*;
 
 #[derive(Debug)]
 pub struct Calendar {
-    date: Date<Local>,
+    date: NaiveDate,
 }
 
 impl Calendar {
     pub fn new() -> Self {
         Self {
-            date: Local::now().date(),
+            date: Local::now().date_naive(),
         }
     }
 
-    pub fn date_from_today(&self, weeks: u16) -> Date<Local> {
+    pub fn date_from_today(&self, weeks: u16) -> NaiveDate {
         let curr_monday = self
             .date
             .checked_sub_signed(Duration::days(
@@ -26,7 +26,7 @@ impl Calendar {
             .unwrap()
     }
 
-    pub fn from_today(&self, weeks: u16) -> Vec<Date<Local>> {
+    pub fn from_today(&self, weeks: u16) -> Vec<NaiveDate> {
         let curr_monday = self
             .date
             .checked_sub_signed(Duration::days(
@@ -47,22 +47,22 @@ impl Calendar {
             .checked_add_signed(Duration::weeks(weeks as i64))
             .unwrap();
 
-        let mut days: Vec<Date<Local>> = Vec::new();
+        let mut days: Vec<NaiveDate> = Vec::new();
 
         while before.le(&after) {
             days.push(before);
-            before = before.succ();
+            before = before.succ_opt().expect("Last date is reached");
         }
 
         days
     }
 
     pub fn today() -> (u32, u32) {
-        let d = Local::now().date();
+        let d = Local::now().date_naive();
         (d.month(), d.day())
     }
 
-    pub fn get_date(&self) -> Date<Local> {
+    pub fn get_date(&self) -> NaiveDate {
         self.date
     }
 }

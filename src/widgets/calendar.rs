@@ -1,4 +1,4 @@
-use chrono::{Date, Datelike, Duration, Local, Month, NaiveDate, Weekday};
+use chrono::{Datelike, Duration, Local, Month, NaiveDate, Weekday};
 use num_traits::cast::FromPrimitive;
 use tui::{
     buffer::Buffer,
@@ -29,7 +29,7 @@ impl CalendarState {
 
 #[derive(Debug)]
 pub struct CalendarWidget<'a> {
-    today: Date<Local>,
+    today: NaiveDate,
     style: Style,
     block: Option<Block<'a>>,
     highlight_style: Style,
@@ -39,7 +39,7 @@ pub struct CalendarWidget<'a> {
 
 impl<'a> CalendarWidget<'a> {
     pub fn new(weeks: Weeks<'a>, input_mode: &InputMode) -> Self {
-        let today = Local::now().date();
+        let today = Local::now().date_naive();
 
         CalendarWidget {
             today,
