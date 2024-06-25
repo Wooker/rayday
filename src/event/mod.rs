@@ -218,6 +218,15 @@ impl Ord for Event {
     }
 }
 
+impl Display for Event {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "{:?}|{}|{}|{}",
+            self.id, self.description, self.start, self.end
+        ))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
