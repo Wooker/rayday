@@ -245,10 +245,17 @@ impl<'a> App<'a> {
                 if let Some(selected_idx) = self.state_events.selected {
                     let date = self.state_calendar.get_selected_date();
 
-                    self.state_events.events.remove(selected_idx);
-                    debug!("Events on date {}: {:?}", date, self.state_events.events);
-                    let selected_event = self.state_events.events.get(selected_idx).unwrap();
-                    //self.files.remove_event(selected_event.id().unwrap());
+                    debug!(
+                        "Events on date {}: {:?}",
+                        date,
+                        self.state_events
+                            .events
+                            .iter()
+                            .map(|e| format!("{}", e))
+                            .collect::<Vec<String>>()
+                    );
+
+                    let selected_event = self.state_events.events.remove(selected_idx);
 
                     if let Some(upper) = self.state_events.events.get(selected_idx) {
                         self.state_events.selected = Some(selected_idx);
@@ -260,6 +267,8 @@ impl<'a> App<'a> {
                         self.input_mode = InputMode::Normal;
                         self.state_events.selected = None;
                     }
+
+                    self.files.remove_event(selected_event.id().unwrap());
                 }
             }
             _ => {}
@@ -347,6 +356,7 @@ fn run_app<B: Backend>(
     let mut last_tick = Instant::now();
     loop {
         terminal.draw(|f| ui::draw(f, &mut app))?;
+        debug!("TICK");
 
         let timeout = tick_rate
             .checked_sub(last_tick.elapsed())
