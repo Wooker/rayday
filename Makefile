@@ -29,3 +29,7 @@ db-list: ## Execute database command to list all events
 db-drop:
 	sqlite3 $(DB_PATH) "delete from events;"
 
+db-add-test: ## Add test case for debugging
+	$(eval DATE := $(shell date +%Y-%m-%d))
+	sqlite3 $(DB_PATH) "insert into events (description, start, end) values ('test', '$(DATE) 12:00:00', '$(DATE) 13:00:00');"
+
