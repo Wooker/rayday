@@ -1,0 +1,17 @@
+.DEFAULT_GOAL := help
+
+RED := $'\033[0;31m'
+GREEN := $'\033[32m'
+NC := $'\033[0m' # No Color
+
+# ifneq (,$(wildcard ./.env))
+# 	include .env
+# 	export
+# else
+# 	include .env.example
+# 	export
+# endif
+
+help: # Показ всех доступных скриптов
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
