@@ -75,32 +75,21 @@ impl Files {
 
                 let db_file = PathBuf::from(app_config_dir.join("events.db"));
 
-                match Connection::open(db_file.clone()) {
-                    Ok(db) => Ok(Files {
-                        config_dir: app_config_dir,
-                        config,
-                        db, // rocksdb::DB::open_default(events_file_path).unwrap(),
-                    }),
-                    Err(e) => {
-                        fs::File::create_new(db_file.clone());
-                        let db = Connection::open(db_file).unwrap();
-                        db.execute(
-                            r"create table if not exists events(
-                                id integer primary key,
-                                description text not null,
-                                start datetime not null,
-                                end datetime not null
-                            )",
-                            params![],
-                        )?;
-
-                        Ok(Files {
-                            config_dir: app_config_dir,
-                            config,
-                            db, // rocksdb::DB::open_default(events_file_path).unwrap(),
-                        })
-                    }
-                }
+                let db = Connection::open(db_file.clone()).expect("Could not connect to db");
+                db.execute(
+                    r"create table if not exists events(
+                        id integer primary key,
+                        description text not null,
+                        start datetime not null,
+                        end datetime not null
+                    )",
+                    params![],
+                )?;
+                Ok(Files {
+                    config_dir: app_config_dir,
+                    config,
+                    db, // rocksdb::DB::open_default(events_file_path).unwrap(),
+                })
             }
             None => Err(anyhow!("No $HOME directory found for config")),
         }
