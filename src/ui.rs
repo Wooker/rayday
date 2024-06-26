@@ -6,7 +6,7 @@ use crate::{
         calendar::CalendarWidget,
         event_view::{EventView, EventViewState},
         grid::Grid,
-        popup::{self, centered_rect, PopupAdd},
+        popup::{self, centered_rect, PopupWidget},
         time_grid::TimeGrid,
         weeks::Weeks,
     },
@@ -125,7 +125,7 @@ where
     .highlight_style(Style::default().add_modifier(Modifier::BOLD));
     f.render_stateful_widget(ev, chunks[1], &mut app.state_events);
 
-    let popup = PopupAdd::new(&app.input_time, &app.input_description, &app.input_mode).block(
+    let popup = PopupWidget::new(&app.popup_input, &app.input_mode).block(
         Block::default()
             .title("Add event")
             .borders(Borders::ALL)
@@ -143,7 +143,7 @@ where
             };
             f.set_cursor(
                 // Put cursor past the end of the input text
-                area.x + app.input_time.len() as u16 + 2,
+                area.x + app.popup_input.start_time.len() as u16 + 2,
                 // Move one line down, from the border to the input line
                 area.y + 2, // Title + field name
             );
@@ -156,14 +156,14 @@ where
             } else {
                 centered_rect(popup::HEIGHT, popup::WIDTH, chunks[1])
             };
-            f.set_cursor(area.x + app.input_description.len() as u16 + 2, area.y + 5);
+            f.set_cursor(
+                area.x + app.popup_input.description.len() as u16 + 2,
+                area.y + 5,
+            );
             f.render_widget(Clear, area);
             f.render_widget(popup, area);
         }
-        _ => {
-            app.input_time = "".to_string();
-            app.input_description = "".to_string();
-        }
+        _ => {}
     }
 }
 

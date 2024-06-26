@@ -5,6 +5,7 @@ mod calendar;
 mod event;
 mod files;
 mod keypress_handler;
+mod popup;
 mod ui;
 mod widgets;
 

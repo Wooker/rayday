@@ -1,4 +1,5 @@
 use crate::{
+    popup::input::PopupInput,
     ui,
     widgets::{calendar::CalendarState, event_view::EventViewState},
 };
@@ -63,8 +64,7 @@ pub(crate) struct App<'a> {
     pub files: Files,
     pub state_calendar: CalendarState, //Date<Local>,
     pub state_events: EventViewState,
-    pub input_time: String,
-    pub input_description: String,
+    pub popup_input: PopupInput,
     pub hint_text: String,
     pub input_mode: InputMode,
 }
@@ -74,8 +74,6 @@ impl<'a> App<'a> {
         let files = Files::new().unwrap();
         let selected_date = Local::now().naive_local().date();
         let events = files.get_events_on_date(selected_date);
-        debug!("App is created");
-        debug!("Events: {:?}", events);
 
         App {
             title,
@@ -85,8 +83,7 @@ impl<'a> App<'a> {
             files,
             state_calendar: CalendarState::new(selected_date),
             state_events: EventViewState::new(None, events),
-            input_time: String::new(),
-            input_description: String::new(),
+            popup_input: PopupInput::default(),
             hint_text: String::new(),
             input_mode: InputMode::Normal,
         }
@@ -279,35 +276,39 @@ impl<'a> App<'a> {
     pub fn on_add_item(&mut self) {
         match self.state_tabs.index {
             0 => {
+                let event = self
+                    .popup_input
+                    .parse()
+                    .expect("Could not parse popup input");
                 // s_e == start-end
-                let s_e: Vec<&str> = self.input_time.split('-').collect();
 
-                let s_h_m: Vec<&str> = s_e.get(0).unwrap().split(':').collect();
-                let e_h_m: Vec<&str> = s_e.get(1).unwrap().split(':').collect();
+                // let s_e: Vec<&str> = self.popup_input.start_date.split('-').collect();
 
-                let (s_h, s_m) = (s_h_m.get(0).unwrap(), s_h_m.get(1).unwrap());
-                let (e_h, e_m) = (e_h_m.get(0).unwrap(), e_h_m.get(1).unwrap());
+                // let s_h_m: Vec<&str> = s_e.get(0).unwrap().split(':').collect();
+                // let e_h_m: Vec<&str> = s_e.get(1).unwrap().split(':').collect();
 
-                let date = self.state_calendar.get_selected_date();
+                // let (s_h, s_m) = (s_h_m.get(0).unwrap(), s_h_m.get(1).unwrap());
+                // let (e_h, e_m) = (e_h_m.get(0).unwrap(), e_h_m.get(1).unwrap());
 
-                let event = CalEvent::new(
-                    None,
-                    self.input_description.clone(),
-                    NaiveDateTime::parse_from_str(
-                        format!("{} {}", date, s_e.get(0).unwrap()).as_str(),
-                        "%Y-%m-%d %H:%M:%S",
-                    )
-                    .unwrap(),
-                    NaiveDateTime::parse_from_str(
-                        format!("{} {}", date, s_e.get(1).unwrap()).as_str(),
-                        "%Y-%m-%d %H:%M:%S",
-                    )
-                    .unwrap(),
-                );
+                // let date = self.state_calendar.get_selected_date();
+
+                // let event = CalEvent::new(
+                //     None,
+                //     self.input_description.clone(),
+                //     NaiveDateTime::parse_from_str(
+                //         format!("{} {}", date, s_e.get(0).unwrap()).as_str(),
+                //         "%Y-%m-%d %H:%M:%S",
+                //     )
+                //     .unwrap(),
+                //     NaiveDateTime::parse_from_str(
+                //         format!("{} {}", date, s_e.get(1).unwrap()).as_str(),
+                //         "%Y-%m-%d %H:%M:%S",
+                //     )
+                //     .unwrap(),
+                // );
                 self.files.add_event(event).unwrap();
 
-                self.input_time = String::new();
-                self.input_description = String::new();
+                self.popup_input = PopupInput::default();
                 self.state_events = EventViewState::new(
                     None,
                     self.files
@@ -389,10 +390,10 @@ fn run_app<B: Backend>(
                             app.input_mode = InputMode::AddingDescription;
                         }
                         KeyCode::Char(c) => {
-                            app.input_time.push(c);
+                            // app.input_time.push(c);
                         }
                         KeyCode::Backspace => {
-                            app.input_time.pop();
+                            // app.input_time.pop();
                         }
                         KeyCode::Esc => {
                             app.input_mode = InputMode::Normal;
@@ -405,10 +406,10 @@ fn run_app<B: Backend>(
                             app.input_mode = InputMode::Normal;
                         }
                         KeyCode::Char(c) => {
-                            app.input_description.push(c);
+                            // app.input_description.push(c);
                         }
                         KeyCode::Backspace => {
-                            app.input_description.pop();
+                            // app.input_description.pop();
                         }
                         KeyCode::Esc => {
                             app.input_mode = InputMode::AddingTime;
