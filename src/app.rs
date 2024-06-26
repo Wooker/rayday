@@ -1,5 +1,5 @@
 use crate::{
-    popup::input::PopupInput,
+    popup::{input::PopupInput, state::PopupState},
     ui,
     widgets::{calendar::CalendarState, event_view::EventViewState},
 };
@@ -59,12 +59,12 @@ pub enum InputMode {
 pub(crate) struct App<'a> {
     pub title: &'a str,
     pub should_quit: bool,
-    pub state_tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
     pub files: Files,
-    pub state_calendar: CalendarState, //Date<Local>,
+    pub state_tabs: TabsState<'a>,
+    pub state_calendar: CalendarState,
     pub state_events: EventViewState,
-    pub popup_input: PopupInput,
+    pub state_popup: PopupState,
     pub hint_text: String,
     pub input_mode: InputMode,
 }
@@ -83,7 +83,7 @@ impl<'a> App<'a> {
             files,
             state_calendar: CalendarState::new(selected_date),
             state_events: EventViewState::new(None, events),
-            popup_input: PopupInput::default(),
+            state_popup: PopupState::new(PopupInput::default()),
             hint_text: String::new(),
             input_mode: InputMode::Normal,
         }
@@ -277,7 +277,7 @@ impl<'a> App<'a> {
         match self.state_tabs.index {
             0 => {
                 let event = self
-                    .popup_input
+                    .state_popup
                     .parse()
                     .expect("Could not parse popup input");
                 // s_e == start-end
@@ -308,7 +308,7 @@ impl<'a> App<'a> {
                 // );
                 self.files.add_event(event).unwrap();
 
-                self.popup_input = PopupInput::default();
+                self.state_popup.clear();
                 self.state_events = EventViewState::new(
                     None,
                     self.files
