@@ -4,7 +4,7 @@ use crate::{
     app::{App, InputMode},
     widgets::{
         calendar::CalendarWidget,
-        event_view::{EventView, EventViewState},
+        event_view::{EventViewState, EventViewWidget},
         grid::Grid,
         popup::{self, centered_rect, PopupWidget},
         time_grid::TimeGrid,
@@ -74,7 +74,7 @@ where
         height_without_borders,
         chunks[0].width,
     );
-    let mut calendar = CalendarWidget::new(weeks, &app.input_mode)
+    let mut calendar = CalendarWidget::new(weeks)
         .block(
             Block::default()
                 .borders(Borders::ALL)
@@ -92,16 +92,11 @@ where
     f.render_stateful_widget(calendar, chunks[0], &mut app.state_calendar);
 
     let selected_date = app.state_calendar.get_selected_date();
+    app.state_events.events = app.files.get_events_on_date(selected_date);
 
-    app.state_events.events = app
-        .files
-        .get_events_on_date(app.state_calendar.get_selected_date());
-    debug!("App events: {:?}", app.state_events.events);
-
-    let mut ev = EventView::new(
+    let mut ev = EventViewWidget::new(
         // app.files.get_events_on_date(app.state_calendar.get_selected_date()),
         app.state_events.events.clone(),
-        &app.input_mode,
         app.enhanced_graphics,
     )
     .block(Block::default().borders(Borders::ALL).title(format!(
@@ -125,7 +120,7 @@ where
     .highlight_style(Style::default().add_modifier(Modifier::BOLD));
     f.render_stateful_widget(ev, chunks[1], &mut app.state_events);
 
-    let popup = PopupWidget::new(&app.popup_input, &app.input_mode).block(
+    let popup = PopupWidget::new().block(
         Block::default()
             .title("Add event")
             .borders(Borders::ALL)
@@ -134,6 +129,7 @@ where
             .style(Style::default().bg(Color::Black)),
     );
 
+    /*
     match app.input_mode {
         InputMode::AddingTime => {
             let area = if let Some(block) = &popup.block {
@@ -148,7 +144,7 @@ where
                 area.y + 2, // Title + field name
             );
             f.render_widget(Clear, area); //clear the background
-            f.render_widget(popup, area);
+            f.render_stateful_widget(popup, area, &mut app.state_popup);
         }
         InputMode::AddingDescription => {
             let area = if let Some(block) = &popup.block {
@@ -165,6 +161,7 @@ where
         }
         _ => {}
     }
+    */
 }
 
 fn draw_second_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)

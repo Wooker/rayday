@@ -14,7 +14,7 @@ use tui::{
     },
 };
 
-use crate::{app::InputMode, event::Event};
+use crate::event::Event;
 
 use super::{event_slot::EventSlot, time_grid::TimeGrid};
 
@@ -34,7 +34,7 @@ impl EventViewState {
     }
 }
 
-pub(crate) struct EventView<'a> {
+pub(crate) struct EventViewWidget<'a> {
     event_tree: CenteredIntervalTree<NaiveDateTime, String>,
     style: Style,
     block: Option<Block<'a>>,
@@ -43,8 +43,8 @@ pub(crate) struct EventView<'a> {
     enhanced: bool,
 }
 
-impl<'a> EventView<'a> {
-    pub fn new(events: Vec<Event>, input_mode: &InputMode, enhanced_graphics: bool) -> Self {
+impl<'a> EventViewWidget<'a> {
+    pub fn new(events: Vec<Event>, enhanced_graphics: bool) -> Self {
         let mut tree = CenteredIntervalTree::<NaiveDateTime, String>::new(); //IntervalTree::<NaiveTime, String>::new();
 
         for event in events.iter() {
@@ -54,7 +54,7 @@ impl<'a> EventView<'a> {
             );
         }
 
-        EventView {
+        EventViewWidget {
             event_tree: tree,
             block: None,
             style: Style::default(),
@@ -64,28 +64,28 @@ impl<'a> EventView<'a> {
         }
     }
 
-    pub fn block(mut self, block: Block<'a>) -> EventView<'a> {
+    pub fn block(mut self, block: Block<'a>) -> EventViewWidget<'a> {
         self.block = Some(block);
         self
     }
 
-    pub fn style(mut self, style: Style) -> EventView<'a> {
+    pub fn style(mut self, style: Style) -> EventViewWidget<'a> {
         self.style = style;
         self
     }
 
-    pub fn highlight_symbol(mut self, highlight_symbol: &'a str) -> EventView<'a> {
+    pub fn highlight_symbol(mut self, highlight_symbol: &'a str) -> EventViewWidget<'a> {
         self.highlight_symbol = Some(highlight_symbol);
         self
     }
 
-    pub fn highlight_style(mut self, style: Style) -> EventView<'a> {
+    pub fn highlight_style(mut self, style: Style) -> EventViewWidget<'a> {
         self.highlight_style = style;
         self
     }
 }
 
-impl<'a> StatefulWidget for EventView<'a> {
+impl<'a> StatefulWidget for EventViewWidget<'a> {
     type State = EventViewState;
 
     fn render(mut self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
