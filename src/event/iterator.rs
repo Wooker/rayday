@@ -1,4 +1,4 @@
-use centered_interval_tree::{inner_info::InnerInfo, CenteredIntervalTree, Node};
+use centered_interval_tree::{inner_info::InnerInfo, node::Node, CenteredIntervalTree};
 use std::{cell::RefCell, fmt::Debug, ops::Add, rc::Rc};
 
 pub struct CenTreeNodeIterator<I, V> {
