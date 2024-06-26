@@ -6,37 +6,29 @@ use tui::{
     widgets::{Block, Borders, Paragraph, Widget},
 };
 
-use crate::app::InputMode;
+use crate::{app::InputMode, popup::input::PopupInput};
 
 pub const WIDTH: u16 = 60;
 pub const HEIGHT: u16 = 16;
 
-pub struct PopupAdd<'a> {
-    start_date: String,
-    start_time: String,
-    end_date: String,
-    end_time: String,
-    description: &'a String,
+pub struct PopupWidget<'a> {
+    input: &'a PopupInput,
     input_mode: &'a InputMode,
     pub block: Option<Block<'a>>,
     error_message: Option<&'a str>,
 }
 
-impl<'a> PopupAdd<'a> {
-    pub fn new(time: &'a String, description: &'a String, input_mode: &'a InputMode) -> Self {
-        PopupAdd {
-            start_date: String::from(""),
-            start_time: String::from(""),
-            end_date: String::from(""),
-            end_time: String::from(""),
-            description,
+impl<'a> PopupWidget<'a> {
+    pub fn new(input: &'a PopupInput, input_mode: &'a InputMode) -> Self {
+        PopupWidget {
+            input,
             input_mode,
             block: None,
             error_message: None,
         }
     }
 
-    pub fn block(mut self, block: Block<'a>) -> PopupAdd<'a> {
+    pub fn block(mut self, block: Block<'a>) -> PopupWidget<'a> {
         self.block = Some(block);
         self
     }
@@ -68,7 +60,7 @@ pub fn centered_rect(height: u16, width: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1]
 }
 
-impl<'a> Widget for PopupAdd<'a> {
+impl<'a> Widget for PopupWidget<'a> {
     fn render(mut self, area: Rect, buf: &mut tui::buffer::Buffer) {
         let title = String::from("Time");
         let block_area = match self.block.take() {
@@ -103,7 +95,7 @@ impl<'a> Widget for PopupAdd<'a> {
             .split(layout[1]);
 
         // Start form fields
-        let start_date_par = Paragraph::new(self.start_time.as_ref())
+        let start_date_par = Paragraph::new(self.input.start_time.as_ref())
             .style(match self.input_mode {
                 InputMode::AddingTime => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
@@ -114,7 +106,7 @@ impl<'a> Widget for PopupAdd<'a> {
                     .title("Start date (YYYY-MM-DD)"),
             );
         start_date_par.render(start_layout[0], buf);
-        let start_time_par = Paragraph::new(self.start_time.as_ref())
+        let start_time_par = Paragraph::new(self.input.start_time.as_ref())
             .style(match self.input_mode {
                 InputMode::AddingTime => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
@@ -123,7 +115,7 @@ impl<'a> Widget for PopupAdd<'a> {
         start_time_par.render(start_layout[1], buf);
 
         // End form fields
-        let end_date_par = Paragraph::new(self.end_time.as_ref())
+        let end_date_par = Paragraph::new(self.input.end_time.as_ref())
             .style(match self.input_mode {
                 InputMode::AddingTime => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
@@ -134,7 +126,7 @@ impl<'a> Widget for PopupAdd<'a> {
                     .title("Start date (YYYY-MM-DD)"),
             );
         end_date_par.render(end_layout[0], buf);
-        let end_time_par = Paragraph::new(self.end_time.as_ref())
+        let end_time_par = Paragraph::new(self.input.end_time.as_ref())
             .style(match self.input_mode {
                 InputMode::AddingTime => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
@@ -142,7 +134,7 @@ impl<'a> Widget for PopupAdd<'a> {
             .block(Block::default().borders(Borders::ALL).title("Time (hh:mm)"));
         end_time_par.render(end_layout[1], buf);
 
-        let description_par = Paragraph::new(self.description.as_ref())
+        let description_par = Paragraph::new(self.input.description.as_ref())
             .style(match self.input_mode {
                 InputMode::AddingDescription => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
