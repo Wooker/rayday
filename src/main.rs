@@ -11,13 +11,13 @@ mod runner;
 mod ui;
 mod widgets;
 
+use crate::app::App;
+
 use anyhow::Result;
 use chrono::{Local, NaiveDate};
 use log2::*;
 use runner::run;
 use std::error::Error;
-
-use crate::app::App;
 
 fn main() -> Result<()> {
     let _log2 = log2::open("log.txt")

@@ -1,8 +1,6 @@
 use crate::{
     event::{Event as CalEvent, EventTime as CalEventTime},
     files::Files,
-};
-use crate::{
     popup::{input::PopupInput, state::PopupState},
     ui,
     widgets::{calendar::CalendarState, event_view::EventViewState},
