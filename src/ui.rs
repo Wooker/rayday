@@ -114,7 +114,7 @@ where
         }
     )))
     .style(match app.input_mode {
-        InputMode::Selecting => Style::default().fg(Color::Yellow),
+        InputMode::Select => Style::default().fg(Color::Yellow),
         _ => Style::default(),
     })
     .highlight_style(Style::default().add_modifier(Modifier::BOLD));
