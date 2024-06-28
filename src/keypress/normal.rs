@@ -1,6 +1,5 @@
 use chrono::Duration;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use log2::debug;
 
 use crate::{
     app::{App, InputMode},

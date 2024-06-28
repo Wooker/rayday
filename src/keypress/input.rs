@@ -1,6 +1,5 @@
 use chrono::Duration;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use log2::debug;
 
 use crate::{
     app::{App, InputMode},
@@ -93,7 +92,6 @@ pub fn on_next<'a>(mut app: App<'a>) -> App<'a> {
 }
 
 pub fn on_previous<'a>(mut app: App<'a>) -> App<'a> {
-    debug!("On Prev");
     match app.state_popup.input.state {
         PopupInputState::StartDate => {
             app = on_exit(app);

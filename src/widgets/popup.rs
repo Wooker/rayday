@@ -1,6 +1,5 @@
 use std::ops::Div;
 
-use log2::debug;
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
@@ -68,7 +67,6 @@ impl<'a> StatefulWidget for PopupWidget<'a> {
     type State = PopupState;
 
     fn render(mut self, area: Rect, buf: &mut tui::buffer::Buffer, state: &mut Self::State) {
-        debug!("render start {}", state.input.start_date);
         let title = String::from("Time");
         let block_area = match self.block.take() {
             Some(b) => {
@@ -156,6 +154,5 @@ impl<'a> StatefulWidget for PopupWidget<'a> {
             })
             .block(Block::default().borders(Borders::ALL).title("Description"));
         description_par.render(layout[2], buf);
-        debug!("render end {}", state.input.start_date);
     }
 }

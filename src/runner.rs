@@ -8,7 +8,6 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use log2::debug;
 use tui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -37,7 +36,6 @@ pub fn run(mut app: App, tick_rate: Duration, enhanced_graphics: bool) -> Result
     )?;
     terminal.show_cursor()?;
 
-    debug!("Result: {:?}", res);
     if let Err(err) = res {
         println!("{:?}", err)
     }

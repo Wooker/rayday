@@ -2,7 +2,6 @@ pub(crate) mod iterator;
 
 use chrono::{prelude::*, Duration};
 
-use log2::debug;
 use serde::{Deserialize, Serialize};
 use std::{
     borrow::Borrow,

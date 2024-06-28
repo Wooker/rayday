@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Error as AnyhowError, Result};
 //use config::{Config, ConfigError, Map, Source, Value};
 use confy::{load_path, store_path};
-use log2::{debug, info};
+use log2::info;
 use rusqlite::{params, Connection, Params};
 use std::{
     collections::HashMap,
@@ -101,7 +101,7 @@ impl Files {
             params![event.desc(), event.start(), event.end(),],
         );
 
-        info!("Added event {}", event.to_string());
+        info!("Adding event {}", event);
         Ok(())
     }
 
@@ -110,6 +110,7 @@ impl Files {
             .execute("delete from events where id=?1", params![id])
             .expect("Could not remove event from db");
 
+        info!("Removed {} event with id: {}", changed, id);
         Ok(())
     }
 
@@ -119,7 +120,6 @@ impl Files {
             .prepare("select * from events where id = ?1")
             .expect("Could not prepare statement");
         let event = stmt.query([id]).expect("Could not query statement");
-        info!("Event with id: {}", id);
 
         None
     }

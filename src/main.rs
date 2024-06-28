@@ -34,5 +34,6 @@ fn main() -> Result<()> {
     let mut app = App::new("RayDay", true);
     run(app, tick_rate, true)?;
 
+    info!("Shutdown with result: {:?}", result);
     Ok(())
 }
