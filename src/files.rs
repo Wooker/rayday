@@ -145,10 +145,7 @@ impl Files {
             .expect("Could not query rows");
 
         // Collect events
-        let events = event_iter.map(|e| e.unwrap()).collect();
-
-        debug!("Events on date {}: {:?}", date, events);
-        events
+        event_iter.map(|e| e.unwrap()).collect()
     }
 
     pub fn get_config(&self) -> &Config {

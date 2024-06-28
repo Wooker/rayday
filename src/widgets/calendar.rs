@@ -9,7 +9,7 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::{app::InputMode, widgets::weeks::Weeks};
+use crate::widgets::weeks::Weeks;
 
 const DAY_WIDTH: u8 = 2;
 
@@ -38,7 +38,7 @@ pub struct CalendarWidget<'a> {
 }
 
 impl<'a> CalendarWidget<'a> {
-    pub fn new(weeks: Weeks<'a>, input_mode: &InputMode) -> Self {
+    pub fn new(weeks: Weeks<'a>) -> Self {
         let today = Local::now().date_naive();
 
         CalendarWidget {

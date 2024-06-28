@@ -1,36 +1,38 @@
 use std::ops::Div;
 
+use log2::debug;
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    widgets::{Block, Borders, Paragraph, Widget},
+    widgets::{Block, Borders, Paragraph, StatefulWidget, Widget},
 };
 
-use crate::app::InputMode;
+use crate::{
+    app::InputMode,
+    popup::{
+        input::{PopupInput, PopupInputState},
+        state::PopupState,
+    },
+};
 
-pub const WIDTH: u16 = 30;
-pub const HEIGHT: u16 = 8;
+pub const WIDTH: u16 = 60;
+pub const HEIGHT: u16 = 16;
 
-pub struct PopupAdd<'a> {
-    time: &'a String,
-    description: &'a String,
-    input_mode: &'a InputMode,
+pub struct PopupWidget<'a> {
     pub block: Option<Block<'a>>,
     error_message: Option<&'a str>,
 }
 
-impl<'a> PopupAdd<'a> {
-    pub fn new(time: &'a String, description: &'a String, input_mode: &'a InputMode) -> Self {
-        PopupAdd {
-            time,
-            description,
-            input_mode,
+impl<'a> PopupWidget<'a> {
+    pub fn new() -> Self {
+        PopupWidget {
+            // input_mode,
             block: None,
             error_message: None,
         }
     }
 
-    pub fn block(mut self, block: Block<'a>) -> PopupAdd<'a> {
+    pub fn block(mut self, block: Block<'a>) -> PopupWidget<'a> {
         self.block = Some(block);
         self
     }
@@ -62,8 +64,11 @@ pub fn centered_rect(height: u16, width: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1]
 }
 
-impl<'a> Widget for PopupAdd<'a> {
-    fn render(mut self, area: Rect, buf: &mut tui::buffer::Buffer) {
+impl<'a> StatefulWidget for PopupWidget<'a> {
+    type State = PopupState;
+
+    fn render(mut self, area: Rect, buf: &mut tui::buffer::Buffer, state: &mut Self::State) {
+        debug!("render start {}", state.input.start_date);
         let title = String::from("Time");
         let block_area = match self.block.take() {
             Some(b) => {
@@ -75,24 +80,82 @@ impl<'a> Widget for PopupAdd<'a> {
         };
 
         let layout = Layout::default()
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .constraints(
+                [
+                    Constraint::Percentage(33),
+                    Constraint::Percentage(33),
+                    Constraint::Percentage(33),
+                ]
+                .as_ref(),
+            )
             .direction(Direction::Vertical)
             .split(block_area);
 
-        let time_par = Paragraph::new(self.time.as_ref())
-            .style(match self.input_mode {
-                InputMode::AddingTime => Style::default().fg(Color::Yellow),
+        let start_layout = Layout::default()
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .direction(Direction::Horizontal)
+            .split(layout[0]);
+
+        let end_layout = Layout::default()
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .direction(Direction::Horizontal)
+            .split(layout[1]);
+
+        // Start form fields
+        let start_date_par = Paragraph::new(state.input.start_date.as_ref())
+            .style(match state.input.state {
+                PopupInputState::StartDate => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
             })
-            .block(Block::default().borders(Borders::ALL).title("Time (hh:mm)"));
-        time_par.render(layout[0], buf);
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Start date (YYYY-MM-DD)"),
+            );
+        start_date_par.render(start_layout[0], buf);
+        let start_time_par = Paragraph::new(state.input.start_time.as_ref())
+            .style(match state.input.state {
+                PopupInputState::StartTime => Style::default().fg(Color::Yellow),
+                _ => Style::default(),
+            })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Start time (hh:mm)"),
+            );
+        start_time_par.render(start_layout[1], buf);
 
-        let description_par = Paragraph::new(self.description.as_ref())
-            .style(match self.input_mode {
-                InputMode::AddingDescription => Style::default().fg(Color::Yellow),
+        // End form fields
+        let end_date_par = Paragraph::new(state.input.end_date.as_ref())
+            .style(match state.input.state {
+                PopupInputState::EndDate => Style::default().fg(Color::Yellow),
+                _ => Style::default(),
+            })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("End date (YYYY-MM-DD)"),
+            );
+        end_date_par.render(end_layout[0], buf);
+        let end_time_par = Paragraph::new(state.input.end_time.as_ref())
+            .style(match state.input.state {
+                PopupInputState::EndTime => Style::default().fg(Color::Yellow),
+                _ => Style::default(),
+            })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("End time (hh:mm)"),
+            );
+        end_time_par.render(end_layout[1], buf);
+
+        let description_par = Paragraph::new(state.input.description.as_ref())
+            .style(match state.input.state {
+                PopupInputState::Description => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
             })
             .block(Block::default().borders(Borders::ALL).title("Description"));
-        description_par.render(layout[1], buf);
+        description_par.render(layout[2], buf);
+        debug!("render end {}", state.input.start_date);
     }
 }
