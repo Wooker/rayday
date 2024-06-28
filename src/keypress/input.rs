@@ -12,13 +12,12 @@ use super::normal::on_add_event;
 
 pub fn handle<'a>(key: KeyEvent, mut app: App<'a>) -> App<'a> {
     match key.code {
-        // KeyCode::Char(c) if key.modifiers == KeyModifiers::CONTROL => app.on_ctrl_key(c),
         KeyCode::Char(c) => on_key(c, app),
         KeyCode::Left => on_left(app),
         KeyCode::Right => on_right(app),
         KeyCode::Enter | KeyCode::Tab => on_next(app),
-        KeyCode::Tab if key.modifiers == KeyModifiers::SHIFT => on_previous(app),
-        KeyCode::Enter => on_next(app),
+        KeyCode::BackTab => on_previous(app),
+        KeyCode::Tab | KeyCode::Enter => on_next(app),
         KeyCode::Backspace => on_erase(app),
         KeyCode::Esc => on_exit(app),
         _ => app,
@@ -86,7 +85,6 @@ pub fn on_next<'a>(mut app: App<'a>) -> App<'a> {
         PopupInputState::Description => {
             app.state_popup.input.state = PopupInputState::StartDate;
             app.input_mode = InputMode::Normal;
-            app = crate::keypress::normal::on_key('a', app);
             app = on_add_event(app);
             app = on_exit(app);
         }
@@ -109,6 +107,7 @@ pub fn on_previous<'a>(mut app: App<'a>) -> App<'a> {
 }
 pub fn on_exit<'a>(mut app: App<'a>) -> App<'a> {
     app.input_mode = InputMode::Normal;
+    app.state_popup.clear();
     app.state_popup.visible = false;
     app
 }
