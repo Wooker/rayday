@@ -106,11 +106,12 @@ impl Files {
     }
 
     pub fn remove_event(&mut self, id: usize) -> Result<(), Error> {
-        self.db
+        let num_of_affected = self
+            .db
             .execute("delete from events where id=?1", params![id])
             .expect("Could not remove event from db");
 
-        info!("Removed {} event with id: {}", changed, id);
+        info!("Removed {} event with id: {}", num_of_affected, id);
         Ok(())
     }
 
