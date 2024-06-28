@@ -129,7 +129,7 @@ impl Files {
         // Get EventTime as keys from db
         let mut stmt = self
             .db
-            .prepare("select * from events where start > ?1 and end < ?2")
+            .prepare("select * from events where start > ?1 and end < ?2 order by start asc")
             .expect("Could not prepare statement");
 
         // Query rows and parse Events
