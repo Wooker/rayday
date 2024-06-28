@@ -48,8 +48,7 @@ impl<'a> TabsState<'a> {
 
 pub enum InputMode {
     Normal,
-    AddingTime,
-    AddingDescription,
+    Input,
     Select,
 }
 
@@ -86,12 +85,10 @@ impl<'a> App<'a> {
         }
     }
 
+    // Update app states when the tick timout occurs
     pub fn on_tick(&mut self) {
-        info!("On tick");
         self.state_events.events = self
             .files
             .get_events_on_date(self.state_calendar.get_selected_date());
-
-        info!("App events after tick: {:?}", self.state_events.events);
     }
 }

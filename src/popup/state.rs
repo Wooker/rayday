@@ -3,13 +3,18 @@ use crate::{app::InputMode, event::Event};
 use super::input::PopupInput;
 use anyhow::Result;
 
+#[derive(Debug)]
 pub struct PopupState {
     pub input: PopupInput,
+    pub visible: bool,
 }
 
 impl PopupState {
     pub fn new(input: PopupInput) -> Self {
-        Self { input }
+        Self {
+            input,
+            visible: false,
+        }
     }
 
     pub fn parse(&self) -> Result<Event> {

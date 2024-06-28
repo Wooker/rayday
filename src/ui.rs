@@ -11,7 +11,6 @@ use crate::{
         weeks::Weeks,
     },
 };
-use log2::debug;
 use tui::{
     backend::Backend,
     buffer::Buffer,
@@ -129,39 +128,15 @@ where
             .style(Style::default().bg(Color::Black)),
     );
 
-    /*
-    match app.input_mode {
-        InputMode::AddingTime => {
-            let area = if let Some(block) = &popup.block {
-                block.inner(centered_rect(popup::HEIGHT + 2, popup::WIDTH, chunks[1]))
-            } else {
-                centered_rect(popup::HEIGHT, popup::WIDTH, chunks[1])
-            };
-            f.set_cursor(
-                // Put cursor past the end of the input text
-                area.x + app.popup_input.start_time.len() as u16 + 2,
-                // Move one line down, from the border to the input line
-                area.y + 2, // Title + field name
-            );
-            f.render_widget(Clear, area); //clear the background
-            f.render_stateful_widget(popup, area, &mut app.state_popup);
-        }
-        InputMode::AddingDescription => {
-            let area = if let Some(block) = &popup.block {
-                block.inner(centered_rect(popup::HEIGHT + 2, popup::WIDTH, chunks[1]))
-            } else {
-                centered_rect(popup::HEIGHT, popup::WIDTH, chunks[1])
-            };
-            f.set_cursor(
-                area.x + app.popup_input.description.len() as u16 + 2,
-                area.y + 5,
-            );
-            f.render_widget(Clear, area);
-            f.render_widget(popup, area);
-        }
-        _ => {}
+    let popup_area = if let Some(block) = &popup.block {
+        block.inner(centered_rect(popup::HEIGHT + 2, popup::WIDTH, chunks[1]))
+    } else {
+        centered_rect(popup::HEIGHT, popup::WIDTH, chunks[1])
+    };
+    if app.state_popup.visible {
+        f.render_widget(Clear, popup_area); //clear the background
+        f.render_stateful_widget(popup, popup_area, &mut app.state_popup);
     }
-    */
 }
 
 fn draw_second_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
