@@ -47,7 +47,7 @@ impl PopupInput {
 
         Ok(Event::new(
             None,
-            "Test".to_string(),
+            self.description.clone(),
             NaiveDateTime::new(start_date, start_time),
             NaiveDateTime::new(end_date, end_time),
         ))
