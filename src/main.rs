@@ -32,7 +32,7 @@ fn main() -> Result<()> {
 
     let tick_rate = std::time::Duration::from_secs(5);
     let mut app = App::new("RayDay", true);
-    run(app, tick_rate, true)?;
+    let result = run(app, tick_rate, true);
 
     info!("Shutdown with result: {:?}", result);
     Ok(())
