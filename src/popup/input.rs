@@ -53,6 +53,20 @@ impl PopupInput {
         ))
     }
 
+    pub fn load(&mut self, event: &Event) -> Result<()> {
+        let start = event.start();
+        self.start_date = start.date().to_string();
+        self.start_time = start.time().to_string();
+
+        let end = event.end();
+        self.end_date = end.date().to_string();
+        self.end_time = end.time().to_string();
+
+        self.description = event.desc();
+
+        Ok(())
+    }
+
     pub fn set_date(&mut self, date: NaiveDate) -> Result<()> {
         self.start_date = date.to_string();
         self.end_date = date.to_string();
