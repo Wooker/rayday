@@ -47,7 +47,7 @@ impl<'a> TabsState<'a> {
 
 #[derive(Clone)]
 pub struct Input {
-    seq: Vec<InputMode>,
+    pub seq: Vec<InputMode>,
 }
 
 impl Input {
@@ -57,7 +57,7 @@ impl Input {
         }
     }
 
-    pub fn get(&self) -> Option<&InputMode> {
+    pub fn current(&self) -> Option<&InputMode> {
         self.seq.last()
     }
 
@@ -68,12 +68,12 @@ impl Input {
     }
 
     pub fn restore(&mut self) -> Result<()> {
-        if let Some(mode) = self.seq.pop() {}
+        self.seq.pop();
         Ok(())
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum InputMode {
     Normal,
     Input,

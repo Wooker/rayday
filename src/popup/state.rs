@@ -17,10 +17,6 @@ impl PopupState {
         }
     }
 
-    pub fn parse(&self) -> Result<Event> {
-        self.input.parse()
-    }
-
     pub fn clear(&mut self) {
         self.input = PopupInput::default();
     }

@@ -79,7 +79,7 @@ where
                 .borders(Borders::ALL)
                 .title("Calendar Widget"),
         )
-        .style(match app.input_mode.get() {
+        .style(match app.input_mode.current() {
             Some(InputMode::Normal) => Style::default().fg(Color::Yellow),
             _ => Style::default(),
         })
@@ -112,7 +112,7 @@ where
             String::new()
         }
     )))
-    .style(match app.input_mode.get() {
+    .style(match app.input_mode.current() {
         Some(InputMode::Select) => Style::default().fg(Color::Yellow),
         _ => Style::default(),
     })
