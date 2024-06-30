@@ -39,3 +39,8 @@ db-add-test: ## Add test case for debugging
 	, ('task2', '$(DATE) 13:05:00', '$(DATE) 14:10:00') \
 	;"
 
+db-clear-today: ## Add test case for debugging
+	$(eval DATE := $(shell date +%Y-%m-%d))
+	$(eval TOMORROW := $(shell date +%Y-%m-%d -d "$(date +%Y-%m-%d) + 1 days"))
+	sqlite3 $(DB_PATH) \
+	"delete from events where start > '$(DATE)' and end < '$(TOMORROW)'"
