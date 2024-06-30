@@ -116,14 +116,14 @@ pub fn on_key<'a>(c: char, mut app: App<'a>) -> App<'a> {
         /// Go into select mode
         's' => {
             if app.state_events.events.len() > 0 {
-                app.input_mode = InputMode::Select;
+                app.input_mode.store(InputMode::Select);
                 app.state_events.select(Some(0));
             }
             app
         }
         /// Go into input mode
         'a' => {
-            app.input_mode = InputMode::Input;
+            app.input_mode.store(InputMode::Input);
             app.state_popup
                 .input
                 .set_date(app.state_calendar.get_selected_date());

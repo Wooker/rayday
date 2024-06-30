@@ -14,11 +14,14 @@ mod select;
 pub fn handle<'a>(key: KeyEvent, mut app: App<'a>) -> Result<App<'a>> {
     // TODO: implement handlers to return Result<App<'a>> insted of App<'a>
     // to get rid of `let app ...`
-    let app = match app.input_mode {
-        InputMode::Normal => normal::handle(key, app),
-        InputMode::Select => select::handle(key, app),
-        InputMode::Input => input::handle(key, app),
-        _ => app,
+    let app = match app.input_mode.get() {
+        Some(m) => match m {
+            InputMode::Normal => normal::handle(key, app),
+            InputMode::Select => select::handle(key, app),
+            InputMode::Input => input::handle(key, app),
+            _ => app,
+        },
+        None => app,
     };
 
     Ok(app)

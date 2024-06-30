@@ -83,7 +83,7 @@ pub fn on_next<'a>(mut app: App<'a>) -> App<'a> {
         PopupInputState::EndTime => app.state_popup.input.state = PopupInputState::Description,
         PopupInputState::Description => {
             app.state_popup.input.state = PopupInputState::StartDate;
-            app.input_mode = InputMode::Normal;
+            app.input_mode.restore();
             app = on_add_event(app);
             app = on_exit(app);
         }
@@ -104,7 +104,7 @@ pub fn on_previous<'a>(mut app: App<'a>) -> App<'a> {
     app
 }
 pub fn on_exit<'a>(mut app: App<'a>) -> App<'a> {
-    app.input_mode = InputMode::Normal;
+    app.input_mode.restore();
     app.state_popup.clear();
     app.state_popup.visible = false;
     app
