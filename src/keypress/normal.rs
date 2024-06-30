@@ -83,25 +83,6 @@ pub fn on_right<'a>(mut app: App<'a>) -> App<'a> {
     app
 }
 
-/// Parse popup input into a new event and saves
-/// it in the db. Then clears popup input and loads
-/// events for selected date.
-pub fn on_add_event<'a>(mut app: App<'a>) -> App<'a> {
-    let event = app
-        .state_popup
-        .parse()
-        .expect("Could not parse popup input");
-    app.files.add_event(event).unwrap();
-
-    app.state_popup.clear();
-    app.state_events = EventViewState::new(
-        None,
-        app.files
-            .get_events_on_date(app.state_calendar.get_selected_date()),
-    );
-    app
-}
-
 /// Handle key presses
 pub fn on_key<'a>(c: char, mut app: App<'a>) -> App<'a> {
     match c {
@@ -116,14 +97,14 @@ pub fn on_key<'a>(c: char, mut app: App<'a>) -> App<'a> {
         /// Go into select mode
         's' => {
             if app.state_events.events.len() > 0 {
-                app.input_mode = InputMode::Select;
+                app.input_mode.store(InputMode::Select);
                 app.state_events.select(Some(0));
             }
             app
         }
         /// Go into input mode
         'a' => {
-            app.input_mode = InputMode::Input;
+            app.input_mode.store(InputMode::Input);
             app.state_popup
                 .input
                 .set_date(app.state_calendar.get_selected_date());

@@ -39,18 +39,32 @@ impl Default for PopupInput {
 }
 
 impl PopupInput {
-    pub fn parse(&self) -> Result<Event> {
+    pub fn parse(&self, id: Option<usize>) -> Result<Event> {
         let start_date = NaiveDate::parse_from_str(self.start_date.as_str(), "%Y-%m-%d")?;
         let end_date = NaiveDate::parse_from_str(self.end_date.as_str(), "%Y-%m-%d")?;
-        let start_time = NaiveTime::parse_from_str(self.start_time.as_str(), "%H:%M")?;
-        let end_time = NaiveTime::parse_from_str(self.end_time.as_str(), "%H:%M")?;
+        let start_time = NaiveTime::parse_from_str(self.start_time.as_str(), "%H:%M:%S")?;
+        let end_time = NaiveTime::parse_from_str(self.end_time.as_str(), "%H:%M:%S")?;
 
         Ok(Event::new(
-            None,
+            id,
             self.description.clone(),
             NaiveDateTime::new(start_date, start_time),
             NaiveDateTime::new(end_date, end_time),
         ))
+    }
+
+    pub fn load(&mut self, event: &Event) -> Result<()> {
+        let start = event.start();
+        self.start_date = start.date().to_string();
+        self.start_time = start.time().to_string();
+
+        let end = event.end();
+        self.end_date = end.date().to_string();
+        self.end_time = end.time().to_string();
+
+        self.description = event.desc();
+
+        Ok(())
     }
 
     pub fn set_date(&mut self, date: NaiveDate) -> Result<()> {

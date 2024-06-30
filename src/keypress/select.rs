@@ -47,7 +47,7 @@ pub fn on_delete<'a>(mut app: App<'a>) -> App<'a> {
         } else if let Some(lower) = app.state_events.events.get(selected_idx.saturating_sub(1)) {
             app.state_events.selected = Some(selected_idx - 1);
         } else {
-            app.input_mode = InputMode::Normal;
+            app.input_mode.restore();
             app.state_events.selected = None;
         }
 
@@ -56,15 +56,31 @@ pub fn on_delete<'a>(mut app: App<'a>) -> App<'a> {
     app
 }
 
+pub fn on_edit<'a>(mut app: App<'a>) -> App<'a> {
+    if let Some(selected) = app.state_events.selected {
+        let event = app
+            .state_events
+            .events
+            .get(selected)
+            .expect("No event was selected");
+        app.state_popup.input.load(event);
+        app.input_mode.store(InputMode::Input);
+        app.state_popup.visible = true
+    }
+    app
+}
+
 pub fn on_key<'a>(c: char, mut app: App<'a>) -> App<'a> {
     match c {
         'q' => {
-            app.input_mode = InputMode::Normal;
+            app.state_events.selected = None;
+            app.input_mode.restore();
             app
         }
         'j' => on_down(app),
         'k' => on_up(app),
         'd' => on_delete(app),
+        'e' => on_edit(app),
         _ => app,
     }
 }

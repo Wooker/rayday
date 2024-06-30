@@ -45,6 +45,35 @@ impl<'a> TabsState<'a> {
     }
 }
 
+#[derive(Clone)]
+pub struct Input {
+    pub seq: Vec<InputMode>,
+}
+
+impl Input {
+    pub fn new() -> Self {
+        Self {
+            seq: vec![InputMode::Normal],
+        }
+    }
+
+    pub fn current(&self) -> Option<&InputMode> {
+        self.seq.last()
+    }
+
+    pub fn store(&mut self, mode: InputMode) -> Result<()> {
+        self.seq.push(mode);
+
+        Ok(())
+    }
+
+    pub fn restore(&mut self) -> Result<()> {
+        self.seq.pop();
+        Ok(())
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
 pub enum InputMode {
     Normal,
     Input,
@@ -61,7 +90,7 @@ pub(crate) struct App<'a> {
     pub state_events: EventViewState,
     pub state_popup: PopupState,
     pub hint_text: String,
-    pub input_mode: InputMode,
+    pub input_mode: Input,
 }
 
 impl<'a> App<'a> {
@@ -80,7 +109,7 @@ impl<'a> App<'a> {
             state_events: EventViewState::new(None, events),
             state_popup: PopupState::new(PopupInput::default()),
             hint_text: String::new(),
-            input_mode: InputMode::Normal,
+            input_mode: Input::new(), //InputMode::Normal,
         }
     }
 

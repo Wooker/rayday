@@ -105,6 +105,18 @@ impl Files {
         Ok(())
     }
 
+    pub fn update_event(&mut self, event: Event) -> Result<(), Error> {
+        self.db
+            .execute(
+                "update events set start=?1, end=?2, description=?3 where id=?4",
+                params![event.start(), event.end(), event.desc(), event.id()],
+            )
+            .expect("Could not update event from db");
+
+        info!("Updating event {}", event);
+        Ok(())
+    }
+
     pub fn remove_event(&mut self, id: usize) -> Result<(), Error> {
         let num_of_affected = self
             .db
