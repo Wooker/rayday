@@ -73,21 +73,10 @@ where
         height_without_borders,
         chunks[0].width,
     );
-    let mut calendar = CalendarWidget::new(weeks)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("Calendar Widget"),
-        )
-        .style(match app.input_mode.current() {
-            Some(InputMode::Normal) => Style::default().fg(Color::Yellow),
-            _ => Style::default(),
-        })
-        .highlight_style(
-            Style::default()
-                .bg(app.files.get_config().highlight_color)
-                .add_modifier(Modifier::BOLD),
-        );
+    let mut calendar = CalendarWidget::default()
+        .with_weeks(weeks)
+        .style(&app.input_mode.current().unwrap())
+        .highlight_style(app.files.get_config().highlight_color);
     f.render_stateful_widget(calendar, chunks[0], &mut app.state_calendar);
 
     let selected_date = app.state_calendar.get_selected_date();

@@ -1,15 +1,16 @@
 use chrono::{Datelike, Duration, Local, Month, NaiveDate, Weekday};
+use crossterm::style::Colored;
 use num_traits::cast::FromPrimitive;
 use tui::{
     buffer::Buffer,
     layout::{Corner, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, StatefulWidget, Widget},
+    widgets::{Block, Borders, StatefulWidget, Widget},
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::widgets::weeks::Weeks;
+use crate::{app::InputMode, widgets::weeks::Weeks};
 
 const DAY_WIDTH: u8 = 2;
 
@@ -38,7 +39,7 @@ pub struct CalendarWidget<'a> {
 }
 
 impl<'a> CalendarWidget<'a> {
-    pub fn new(weeks: Weeks<'a>) -> Self {
+    pub fn new() -> Self {
         let today = Local::now().date_naive();
 
         CalendarWidget {
@@ -47,8 +48,13 @@ impl<'a> CalendarWidget<'a> {
             block: None,
             highlight_style: Style::default(),
             highlight_symbol: None,
-            content: weeks.content(),
+            content: Text::raw(""),
         }
+    }
+
+    pub fn with_weeks(mut self, weeks: Weeks<'a>) -> Self {
+        self.content = weeks.content();
+        self
     }
 
     pub fn block(mut self, block: Block<'a>) -> CalendarWidget<'a> {
@@ -56,8 +62,11 @@ impl<'a> CalendarWidget<'a> {
         self
     }
 
-    pub fn style(mut self, style: Style) -> CalendarWidget<'a> {
-        self.style = style;
+    pub fn style(mut self, input_mode: &InputMode) -> CalendarWidget<'a> {
+        self.style = match input_mode {
+            InputMode::Normal => Style::default().fg(Color::Yellow),
+            _ => Style::default(),
+        };
         self
     }
 
@@ -66,9 +75,21 @@ impl<'a> CalendarWidget<'a> {
         self
     }
 
-    pub fn highlight_style(mut self, style: Style) -> CalendarWidget<'a> {
-        self.highlight_style = style;
+    pub fn highlight_style(mut self, highlight_color: Color) -> CalendarWidget<'a> {
+        self.highlight_style = Style::default()
+            .bg(highlight_color)
+            .add_modifier(Modifier::BOLD);
         self
+    }
+}
+
+impl<'a> Default for CalendarWidget<'a> {
+    fn default() -> Self {
+        CalendarWidget::new().block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Calendar Widget"),
+        )
     }
 }
 
