@@ -40,10 +40,14 @@ impl Default for PopupInput {
 
 impl PopupInput {
     pub fn parse(&self, id: Option<usize>) -> Result<Event> {
-        let start_date = NaiveDate::parse_from_str(self.start_date.as_str(), "%Y-%m-%d")?;
-        let end_date = NaiveDate::parse_from_str(self.end_date.as_str(), "%Y-%m-%d")?;
-        let start_time = NaiveTime::parse_from_str(self.start_time.as_str(), "%H:%M:%S")?;
-        let end_time = NaiveTime::parse_from_str(self.end_time.as_str(), "%H:%M:%S")?;
+        let start_date = NaiveDate::parse_from_str(self.start_date.as_str(), "%Y-%m-%d")
+            .expect("Could not parse start date");
+        let end_date = NaiveDate::parse_from_str(self.end_date.as_str(), "%Y-%m-%d")
+            .expect("Could not parse end date");
+        let start_time = NaiveTime::parse_from_str(self.start_time.as_str(), "%H:%M:%S")
+            .expect("Could not parse start time");
+        let end_time = NaiveTime::parse_from_str(self.end_time.as_str(), "%H:%M:%S")
+            .expect("Could not parse end time");
 
         Ok(Event::new(
             id,

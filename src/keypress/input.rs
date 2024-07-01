@@ -1,6 +1,6 @@
 use chrono::Duration;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use log2::info;
+use log2::{error, info};
 
 use crate::{
     app::{App, InputMode},
@@ -85,34 +85,42 @@ pub fn on_previous<'a>(mut app: App<'a>) -> App<'a> {
 /// it in the db. Then clears popup input and loads
 /// events for selected date.
 pub fn on_finish<'a>(mut app: App<'a>) -> App<'a> {
-    if let Some(selected_idx) = app.state_events.selected {
-        let date = app.state_calendar.get_selected_date();
-
-        let selected_event_id = app
-            .state_events
-            .events
-            .get(selected_idx)
-            .expect("No event selected")
-            .id();
-        let event = app
-            .state_popup
-            .input
-            .parse(selected_event_id)
-            .expect("Could not parse popup input");
-
-        app.input_mode.restore();
-        match app.input_mode.current() {
-            Some(InputMode::Normal) => app.files.add_event(event).unwrap(),
-            Some(InputMode::Select) => app.files.update_event(event).unwrap(),
-            _ => {}
+    app.input_mode.restore();
+    match app.input_mode.current() {
+        Some(InputMode::Normal) => {
+            let event = app.state_popup.input.parse(None).unwrap();
+            app.files.add_event(event).unwrap();
         }
-
-        app.state_events = EventViewState::new(
-            Some(selected_idx),
-            app.files
-                .get_events_on_date(app.state_calendar.get_selected_date()),
-        );
+        Some(InputMode::Select) => {
+            if let Some(selected_idx) = app.state_events.selected {
+                let selected_event_id = app
+                    .state_events
+                    .events
+                    .get(selected_idx)
+                    .expect("No event selected")
+                    .id();
+                let selected_event = app
+                    .state_popup
+                    .input
+                    .parse(selected_event_id)
+                    .expect("Could not parse popup input");
+                app.files.update_event(selected_event).unwrap();
+                app.state_events = EventViewState::new(
+                    Some(selected_idx),
+                    app.files
+                        .get_events_on_date(app.state_calendar.get_selected_date()),
+                );
+            } else {
+            }
+        }
+        Some(InputMode::Input) => {
+            error!("App state must not return to Input mode after finishing popup input")
+        }
+        None => {
+            error!("After finishing popup input app state must return to some InputMode, got None")
+        }
     }
+
     app.state_popup.clear();
     app.state_popup.visible = false;
     app
